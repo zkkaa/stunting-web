@@ -19,6 +19,7 @@ interface NavbarProps {
 
 const publicNavItems: NavItem[] = [
   { label: 'Home', href: '/' },
+  { label: 'Konsultasi', href: '/konsultasi' },
 ];
 
 const privateNavItems: NavItem[] = [
@@ -27,6 +28,7 @@ const privateNavItems: NavItem[] = [
   { label: 'Anak', href: '/anak' },
   { label: 'Scan', href: '/scan' },
   { label: 'History', href: '/history' },
+  { label: 'Konsultasi', href: '/konsultasi' },
 ];
 
 const Navbar: React.FC<NavbarProps> = ({
