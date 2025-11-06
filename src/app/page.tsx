@@ -16,7 +16,7 @@ export default function Home() {
       <Features />
       <Process />
       <WhyCompViT onStartDetection={handleStartDetection} />
-      <ConsultationBtn />
+      {/* <ConsultationBtn /> */}
     </Layout>
   );
 }
