@@ -4,12 +4,14 @@ import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Button from '../ui/Button';
+import { useRouter } from 'next/navigation';
 
 interface HeroProps {
   title?: string;
   subtitle?: string;
   description?: string;
   buttonText?: string;
+  buttonLink?: string;
   heroImage?: string;
   onButtonClick?: () => void;
   className?: string;
@@ -20,9 +22,10 @@ const Hero: React.FC<HeroProps> = ({
   subtitle = "",
   description = "Pantau tinggi dan berat badan anak secara otomatis dengan teknologi Computer Vision & IoT yang akurat dan terpercaya.",
   buttonText = "Mulai Deteksi Sekarang",
-  onButtonClick,
+  buttonLink = "/scan",
   className = '',
 }) => {
+  const router = useRouter();
   return (
   <motion.section 
     className={`hero-responsive-bg min-h-[60vh] sm:min-h-[70vh] lg:min-h-screen flex items-center pt-16 pb-20 sm:pt-20 sm:pb-32 lg:pt-24 lg:pb-40 px-6 lg:px-12 relative ${className}`}
@@ -77,7 +80,7 @@ const Hero: React.FC<HeroProps> = ({
               <Button
                 variant="primary"
                 size="lg"
-                onClick={onButtonClick}
+                onClick={() => router.push(buttonLink)}
                 className="!bg-white !text-black hover:!bg-gray-100 focus:ring-white shadow-md px-6 sm:px-8 md:px-10 py-3 sm:py-4 text-sm sm:text-base font-semibold tracking-wide"
               >
                 {buttonText}

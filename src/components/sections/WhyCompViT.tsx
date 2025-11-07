@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Button from '../ui/Button';
+import { useRouter } from 'next/navigation';
 
 interface WhyCardProps {
   title: string;
@@ -44,10 +45,12 @@ const WhyCard: React.FC<WhyCardProps> = ({ title, description }) => {
 
 interface WhyCompViTProps {
   className?: string;
-  onStartDetection?: () => void;
+  buttonLink?: string;
+  buttonText?: string;
 }
 
-const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', onStartDetection }) => {
+const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/scan", buttonText = "Mulai Deteksi Sekarang" }) => {
+  const router = useRouter();
   const whyFeatures = [
     {
       title: "Akurat & Cepat",
@@ -192,10 +195,10 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', onStartDetectio
             <Button
               variant="primary"
               size="lg"
-              onClick={onStartDetection}
+              onClick={() => router.push(buttonLink)}
               className="!bg-white !text-black hover:!bg-gray-100 focus:ring-white shadow-md px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base font-semibold tracking-wide rounded-full"
             >
-              Mulai Deteksi Sekarang
+              {buttonText}
             </Button>
           </motion.div>
         </motion.div>

@@ -15,7 +15,7 @@ export default function Home() {
       <Statistics />
       <Features />
       <Process />
-      <WhyCompViT onStartDetection={handleStartDetection} />
+      <WhyCompViT buttonLink="/scan" buttonText="Mulai Deteksi Sekarang" />
       {/* <ConsultationBtn /> */}
     </Layout>
   );
