@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiFilter, FiSearch, FiMoreVertical, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { fetchParentsData, deleteParentData } from '@/utils/database-clean';
@@ -16,7 +16,7 @@ type ParentProfile = {
   motherImage: string;
 };
 
-export default function OrangTuaPage() {
+function OrangTuaPageContent() {
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
@@ -426,4 +426,11 @@ function ParentCard({ parent }: { parent: ParentProfile }) {
   );
 }
 
+export default function OrangTuaPage() {
+  return (
+    <ProtectedRoute>
+      <OrangTuaPageContent />
+    </ProtectedRoute>
+  );
+}
 

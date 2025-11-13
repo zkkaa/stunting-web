@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiArrowLeft, FiTrash2, FiCheck } from 'react-icons/fi';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -630,8 +630,10 @@ function ResultPageLoading() {
 
 export default function ResultPage() {
   return (
-    <Suspense fallback={<ResultPageLoading />}>
-      <ResultPageContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={<ResultPageLoading />}>
+        <ResultPageContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

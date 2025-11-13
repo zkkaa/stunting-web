@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiArrowLeft, FiTrash2, FiHelpCircle } from 'react-icons/fi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
@@ -59,7 +59,7 @@ const translateStatus = (status: string): string => {
   }
 };
 
-export default function HasilAnalisisPage() {
+function HasilAnalisisPageContent() {
   const router = useRouter();
   const params = useParams();
   const childId = params?.id as string;
@@ -489,5 +489,13 @@ export default function HasilAnalisisPage() {
         </div>
       )}
     </Layout>
+  );
+}
+
+export default function HasilAnalisisPage() {
+  return (
+    <ProtectedRoute>
+      <HasilAnalisisPageContent />
+    </ProtectedRoute>
   );
 }

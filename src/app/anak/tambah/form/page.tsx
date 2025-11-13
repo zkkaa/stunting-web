@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, Suspense, useRef } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiArrowLeft } from 'react-icons/fi';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { insertChildData, uploadChildImage, NewChildData } from '@/utils/database-clean';
@@ -568,14 +568,16 @@ function TambahAnakFormContent() {
 
 export default function TambahAnakFormPage() {
   return (
-    <Suspense fallback={
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-gray-500">Loading...</div>
-        </div>
-      </Layout>
-    }>
-      <TambahAnakFormContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={
+        <Layout>
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-gray-500">Loading...</div>
+          </div>
+        </Layout>
+      }>
+        <TambahAnakFormContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

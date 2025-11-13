@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import { FiArrowLeft, FiMoreVertical, FiEdit2, FiTrash2, FiClock, FiArrowRightCircle } from 'react-icons/fi';
@@ -84,7 +84,7 @@ interface ScanHistoryRecord {
 }
 
 
-export default function ProfileAnakPage() {
+function ProfileAnakPageContent() {
   const router = useRouter();
   const params = useParams();
   const childId = params?.id as string;
@@ -776,5 +776,13 @@ export default function ProfileAnakPage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+export default function ProfileAnakPage() {
+  return (
+    <ProtectedRoute>
+      <ProfileAnakPageContent />
+    </ProtectedRoute>
   );
 }

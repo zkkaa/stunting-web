@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiArrowLeft } from 'react-icons/fi';
 import { useRouter, useParams } from 'next/navigation';
 import { fetchChildByNik, updateChildData, uploadChildImage, deleteChildImage, UpdateChildData, ChildData } from '@/utils/database-clean';
@@ -27,7 +27,7 @@ const calculateAgeFromBirthDate = (birthDate: string) => {
   return { months: months < 0 ? 0 : months, years };
 };
 
-export default function EditChildPage() {
+function EditChildPageContent() {
   const router = useRouter();
   const params = useParams();
   const nik = params?.id as string; // URL parameter adalah NIK anak
@@ -514,5 +514,13 @@ export default function EditChildPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function EditChildPage() {
+  return (
+    <ProtectedRoute>
+      <EditChildPageContent />
+    </ProtectedRoute>
   );
 }

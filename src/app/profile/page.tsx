@@ -1,38 +1,33 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import Layout from '@/components/layout/Layout';
+import { ProtectedRoute } from '@/components';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProfileImageUpload from '@/components/ui/ProfileImageUpload';
 
-export default function ProfilePage() {
-  const { user, loading, signOut } = useAuth();
+function ProfilePageContent() {
+  const { user, signOut } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
 
   const handleLogout = () => {
     signOut();
     router.push('/');
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#407A81] mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <Layout>
+  //       <div className="min-h-screen flex items-center justify-center">
+  //         <div className="text-center">
+  //           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#407A81] mx-auto mb-4"></div>
+  //           <p className="text-gray-600">Loading...</p>
+  //         </div>
+  //       </div>
+  //     </Layout>
+  //   );
+  // }
 
   if (!user) {
     return null;
@@ -134,5 +129,13 @@ export default function ProfilePage() {
         </div>
       </main>
     </Layout>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfilePageContent />
+    </ProtectedRoute>
   );
 }

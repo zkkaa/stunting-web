@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import Link from 'next/link';
 import { FiMoreVertical, FiArrowLeft } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
@@ -21,7 +21,7 @@ const formatAge = (years: number, months: number): string => {
   }
 };
 
-export default function OrangTuaDetailPage() {
+function OrangTuaDetailPageContent() {
   const router = useRouter();
   const params = useParams();
   const parentId = params?.id as string;
@@ -934,4 +934,11 @@ function IdentityRow({ image, name, nik, phone, birthPlace, birthDate, subject }
   );
 }
 
+export default function OrangTuaDetailPage() {
+  return (
+    <ProtectedRoute>
+      <OrangTuaDetailPageContent />
+    </ProtectedRoute>
+  );
+}
 

@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +25,9 @@ export default function LoginPage() {
     const result = await signIn({ email, password });
 
     if (result.success) {
-      router.push('/');
+      // Redirect to the page that was requested, or home if none
+      const redirect = searchParams.get('redirect') || '/';
+      router.push(redirect);
     } else {
       setError(result.error || 'Terjadi kesalahan saat login');
     }

@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { Bayi } from '@/types/bayi';
 import { useRouter } from 'next/navigation';
 import { FiMoreVertical, FiFilter, FiSearch } from 'react-icons/fi';
 import { fetchChildrenData, ChildData, deleteChild } from '@/utils/database-clean';
 
-export default function AnakPage() {
+function AnakPageContent() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('latest');
@@ -453,5 +453,13 @@ function ChildCard({ child, onClick, onOpenMenu, menuOpenId, onEdit, onDelete, c
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AnakPage() {
+  return (
+    <ProtectedRoute>
+      <AnakPageContent />
+    </ProtectedRoute>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { SummaryCards } from '@/components/sections/SummaryCards';
 import { SummaryCard } from '@/types/history';
 import { fetchTempAnalysisHistory, getAnalysisSummary, HistoryData, translateStatus, getStatusColors } from '@/utils/database-clean';
@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { FiFilter, FiSearch, FiClock, FiArrowRightCircle } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 
-export default function HistoryPage() {
+function HistoryPageContent() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [sortOption, setSortOption] = useState('latest');
@@ -458,5 +458,13 @@ export default function HistoryPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <ProtectedRoute>
+      <HistoryPageContent />
+    </ProtectedRoute>
   );
 }

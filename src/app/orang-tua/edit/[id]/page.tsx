@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import Link from 'next/link';
 import { FiArrowLeft } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { fetchParentDetailByNoKK, updateParentData } from '@/utils/database-clean';
 import { useParams } from 'next/navigation';
 
-export default function OrangTuaEditPage() {
+function OrangTuaEditPageContent() {
   const router = useRouter();
   const params = useParams();
   const parentId = params?.id as string;
@@ -376,5 +376,13 @@ function IdentityRow({ editing = false, image, name, nik, phone, birthPlace, bir
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrangTuaEditPage() {
+  return (
+    <ProtectedRoute>
+      <OrangTuaEditPageContent />
+    </ProtectedRoute>
   );
 }

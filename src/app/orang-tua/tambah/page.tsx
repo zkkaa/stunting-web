@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { insertParentData, NewParentData } from '@/utils/database-clean';
@@ -20,7 +20,7 @@ function Input({ label, placeholder = '', value, onChange }: { label: string; pl
   );
 }
 
-export default function TambahOrangTuaPage() {
+function TambahOrangTuaPageContent() {
   const router = useRouter();
   const [form, setForm] = useState({
     father: { name: '', nik: '', phone: '', birthPlace: '', birthDate: '' },
@@ -261,4 +261,11 @@ export default function TambahOrangTuaPage() {
   );
 }
 
+export default function TambahOrangTuaPage() {
+  return (
+    <ProtectedRoute>
+      <TambahOrangTuaPageContent />
+    </ProtectedRoute>
+  );
+}
 

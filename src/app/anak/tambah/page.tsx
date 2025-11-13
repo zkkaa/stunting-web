@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiFilter, FiSearch } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -18,7 +18,7 @@ type ParentProfile = {
   no_kk: string;
 };
 
-export default function TambahAnakPage() {
+function TambahAnakPageContent() {
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
@@ -367,5 +367,13 @@ function ParentCard({ parent, onSelect }: { parent: ParentProfile; onSelect: () 
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TambahAnakPage() {
+  return (
+    <ProtectedRoute>
+      <TambahAnakPageContent />
+    </ProtectedRoute>
   );
 }

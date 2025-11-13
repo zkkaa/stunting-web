@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiChevronDown, FiCamera, FiArrowLeft, FiArrowRightCircle } from 'react-icons/fi';
 import { LuUndo2 } from 'react-icons/lu';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -1310,8 +1310,10 @@ function CameraPageLoading() {
 
 export default function CameraPage() {
   return (
-    <Suspense fallback={<CameraPageLoading />}>
-      <CameraPageContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={<CameraPageLoading />}>
+        <CameraPageContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

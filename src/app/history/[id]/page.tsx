@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout } from '@/components';
+import { Layout, ProtectedRoute } from '@/components';
 import { FiArrowLeft, FiTrash2, FiSave, FiCheck } from 'react-icons/fi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
@@ -22,7 +22,7 @@ interface TempAnalysisDetail {
   image_url?: string;
 }
 
-export default function HistoryDetailPage() {
+function HistoryDetailPageContent() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -607,5 +607,13 @@ export default function HistoryDetailPage() {
         </div>
       )}
     </Layout>
+  );
+}
+
+export default function HistoryDetailPage() {
+  return (
+    <ProtectedRoute>
+      <HistoryDetailPageContent />
+    </ProtectedRoute>
   );
 }
