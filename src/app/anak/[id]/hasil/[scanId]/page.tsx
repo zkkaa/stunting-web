@@ -34,7 +34,7 @@ const getImageUrl = (nik: string, imageName: string) => {
   }
   
   // Otherwise, construct the URL
-  return `https://kgswlhiolxopunygghrs.supabase.co/storage/v1/object/public/pemindaian/${nik}/${imageName}`;
+  return `https://jktptjibvvglvomxafri.supabase.co/storage/v1/object/public/pemindaian/${nik}/${imageName}`;
 };
 
 // Function to map database status to UI status (using same logic as history page)

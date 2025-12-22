@@ -618,7 +618,7 @@ export const deleteChildImage = async (imageUrl: string): Promise<void> => {
     }
     
     // Extract path from full URL
-    // Example: https://kgswlhiolxopunygghrs.supabase.co/storage/v1/object/public/anak/NIK/filename.jpg
+    // Example: https://jktptjibvvglvomxafri.supabase.co/storage/v1/object/public/anak/NIK/filename.jpg
     const pathMatch = imageUrl.match(/\/storage\/v1\/object\/public\/anak\/(.+)$/);
     
     if (!pathMatch) {

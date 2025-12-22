@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -12,16 +12,25 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
     // Wait for auth to finish loading
     if (loading) return;
 
-    // If user is not authenticated, redirect to login
-    if (!user) {
+    // If user is not authenticated and hasn't redirected yet, redirect to login
+    if (!user && !hasRedirected.current) {
+      hasRedirected.current = true;
       router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
   }, [user, loading, router, pathname]);
+
+  // Reset redirect flag when user logs in
+  useEffect(() => {
+    if (user) {
+      hasRedirected.current = false;
+    }
+  }, [user]);
 
   // Show loading state while checking authentication
   if (loading) {

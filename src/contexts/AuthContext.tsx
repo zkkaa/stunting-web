@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthUser, LoginCredentials } from '@/types/user';
 
@@ -25,26 +25,61 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
+    // Only run once on mount
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+    
     // Check if user is stored in localStorage
-    const checkStoredUser = () => {
-      try {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('user');
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
-      setLoading(false);
-    };
-
-    checkStoredUser();
+    } catch (error) {
+      console.error('Error parsing stored user:', error);
+      localStorage.removeItem('user');
+    }
+    setLoading(false);
   }, []);
 
-  const signIn = async (credentials: LoginCredentials) => {
+  const signOut = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem('user');
+  }, []);
+
+  const updateProfileImage = useCallback(async (imageUrl: string) => {
+    if (!user) {
+      return { success: false, error: 'User not logged in' };
+    }
+
+    try {
+      // Update profile image in database
+      const { error } = await supabase
+        .from('User')
+        .update({ profile_image: imageUrl })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Update error:', error);
+        return { success: false, error: 'Failed to update profile image' };
+      }
+
+      // Update local state
+      const updatedUser = { ...user, profile_image: imageUrl };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      return { success: true };
+    } catch (error) {
+      console.error('Update error:', error);
+      return { success: false, error: 'An error occurred while updating profile image' };
+    }
+  }, [user]);
+
+  const signIn = useCallback(async (credentials: LoginCredentials) => {
     console.log(credentials);
     try {
       setLoading(true);
@@ -95,49 +130,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const signOut = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
-
-  const updateProfileImage = async (imageUrl: string) => {
-    if (!user) {
-      return { success: false, error: 'User not logged in' };
-    }
-
-    try {
-      // Update profile image in database
-      const { error } = await supabase
-        .from('User')
-        .update({ profile_image: imageUrl })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Update error:', error);
-        return { success: false, error: 'Failed to update profile image' };
-      }
-
-      // Update local state
-      const updatedUser = { ...user, profile_image: imageUrl };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-
-      return { success: true };
-    } catch (error) {
-      console.error('Update error:', error);
-      return { success: false, error: 'An error occurred while updating profile image' };
-    }
-  };
-
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     signIn,
     signOut,
     updateProfileImage,
-  };
+  }), [user, loading, signIn, signOut, updateProfileImage]);
 
   return (
     <AuthContext.Provider value={value}>
