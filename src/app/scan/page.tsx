@@ -296,7 +296,7 @@ function ScanPageContent() {
                 {/* Camera Raspberry Button */}
                 <button
                   onClick={() => handleCameraSelect('Raspberry')}
-                  className="w-full bg-[#407A81] text-white py-3 px-6 rounded-lg hover:bg-[#326269] transition-colors font-medium"
+                  className="w-full border-2 border-[#407A81] text-[#407A81] py-3 px-6 rounded-lg hover:bg-[#407A81] hover:text-white transition-colors font-medium"
                 >
                   Camera Raspberry
                 </button>

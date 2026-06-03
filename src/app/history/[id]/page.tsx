@@ -375,7 +375,7 @@ function HistoryDetailPageContent() {
                   </div>
 
                   {/* Weight Card */}
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-6 border border-blue-200">
+                  <div className="hidden sm:block bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-6 border border-blue-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Berat Badan</p>
@@ -584,7 +584,7 @@ function HistoryDetailPageContent() {
                   <Image src="/image/icon/tinggi-badan.svg" alt="Tinggi" width={112} height={112} className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28" />
                 </div>
               </div>
-              <div className="bg-[#E9F6F7] rounded-xl p-4 sm:p-6 border border-cyan-200">
+              <div className="hidden sm:block bg-[#E9F6F7] rounded-xl p-4 sm:p-6 border border-cyan-200">
                 <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3 text-center font-medium">Berat Badan</p>
                 <div className="flex items-center justify-between">
                   <Image src="/image/icon/berat-badan.svg" alt="Berat" width={112} height={112} className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28" />

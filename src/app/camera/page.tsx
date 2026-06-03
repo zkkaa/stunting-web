@@ -857,7 +857,7 @@ function CameraPageContent() {
         // For Raspberry, get the uploaded image name from session storage
         const uploadedImageName = sessionStorage.getItem('uploadedImageName');
         if (uploadedImageName) {
-          finalImageUrl = `https://kgswlhiolxopunygghrs.supabase.co/storage/v1/object/public/temp/${uploadedImageName}`;
+          finalImageUrl = `https://jktptjibvvglvomxafri.supabase.co/storage/v1/object/public/temp/${uploadedImageName}`;
           console.log('⚠️ Using original image URL as fallback:', finalImageUrl);
         }
       }
@@ -1040,7 +1040,7 @@ function CameraPageContent() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    Camera Rusbery
+                    Camera Raspberry
                   </button>
                   <button
                     onClick={() => handleCameraSwitch('Camera Handphone')}

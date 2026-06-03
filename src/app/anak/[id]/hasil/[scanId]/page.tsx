@@ -331,10 +331,10 @@ function HasilAnalisisPageContent() {
                     </div>
 
                     {/* Divider */}
-                    <div className="w-px h-20 bg-gray-300"></div>
+                    <div className="hidden sm:block w-px h-20 bg-gray-300"></div>
 
                     {/* Weight */}
-                    <div className="flex flex-col items-center">
+                    <div className="hidden sm:flex flex-col items-center">
                       <span className="text-sm text-gray-600 mb-3 font-medium">Berat Badan</span>
                       <div className="flex items-center gap-3">
                         <Image
@@ -427,7 +427,7 @@ function HasilAnalisisPageContent() {
                   <span className="text-4xl font-bold text-[#407A81]">{record.height} cm</span>
                 </div>
               </div>
-              <div className="flex-1 bg-[#E5F5F7] rounded-xl p-8 flex flex-col items-center border border-[#CDE6EA]">
+              <div className="hidden sm:flex flex-1 bg-[#E5F5F7] rounded-xl p-8 flex flex-col items-center border border-[#CDE6EA]">
                 <span className="text-lg font-medium text-gray-600 mb-4">Berat Badan</span>
                 <div className="flex items-center gap-4">
                   <Image src="/image/icon/berat-badan.svg" alt="Berat Badan" width={80} height={80} />

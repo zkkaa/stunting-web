@@ -342,7 +342,7 @@ function HistoryPageContent() {
 
                       {/* weight pill */}
                       <div 
-                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#397789] bg-[#EFFFFE]"
+                        className="hidden"
                         style={{ minWidth: '80px' }}
                       >
                         <Image 
