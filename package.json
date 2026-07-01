@@ -14,7 +14,7 @@
     "@supabase/supabase-js": "^2.75.0",
     "axios": "^1.13.1",
     "framer-motion": "^12.23.12",
-    "next": "15.4.6",
+    "next": "^16.2.9",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.6.0",
@@ -28,7 +28,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.4.6",
+    "eslint-config-next": "^16.2.9",
     "tailwindcss": "^4",
     "typescript": "^5",
     "webpack": "^5.102.1"
