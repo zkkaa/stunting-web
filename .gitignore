@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-# .env*
+# env files (Sangat Penting: Dibiarkan aktif tanpa tanda pagar)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
 
 # vercel
 .vercel
@@ -40,3 +45,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# database & compressed files (Mencegah file besar ter-push)
+*.sql
+*.zip
+*.rar
+*.tar.gz
