@@ -19,6 +19,7 @@ interface NavbarProps {
 
 const publicNavItems: NavItem[] = [
   { label: 'Home', href: '/' },
+  { label: 'Scan', href: '/scan-publik' }, 
   { label: 'Konsultasi', href: '/konsultasi' },
 ];
 
@@ -66,8 +67,8 @@ const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold text-[var(--color-primary)]">
+          <div className="shrink-0">
+            <Link href="/" className="text-2xl font-bold text-(--color-primary)">
               {logo}
             </Link>
           </div>
@@ -81,8 +82,8 @@ const Navbar: React.FC<NavbarProps> = ({
                   href={item.href}
                   className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                     isActiveLink(item.href)
-                      ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]'
-                      : 'text-gray-600 hover:text-[var(--color-primary)]'
+                      ? 'text-(--color-primary) border-b-2 border-(--color-primary)'
+                      : 'text-gray-600 hover:text-(--color-primary)'
                   }`}
                 >
                   {item.label}
@@ -92,7 +93,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Login Button or Profile Button - Hidden on mobile */}
-          <div className="hidden sm:flex flex-shrink-0">
+          <div className="hidden sm:flex shrink-0">
             {loading ? (
               <div className="px-4 py-2 text-sm font-medium text-gray-500">
                 Loading...
@@ -111,7 +112,7 @@ const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={toggleMobileMenu}
-              className="text-gray-600 hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] p-2 cursor-pointer"
+              className="text-gray-600 hover:text-(--color-primary) focus:outline-none focus:ring-2 focus:ring-(--color-primary) p-2 cursor-pointer"
               aria-label="Toggle menu"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -136,8 +137,8 @@ const Navbar: React.FC<NavbarProps> = ({
                   onClick={closeMobileMenu}
                   className={`block px-3 py-2 text-base font-medium transition-colors duration-200 ${
                     isActiveLink(item.href)
-                      ? 'text-[var(--color-primary)] bg-gray-100'
-                      : 'text-gray-600 hover:text-[var(--color-primary)] hover:bg-gray-100'
+                      ? 'text-(--color-primary) bg-gray-100'
+                      : 'text-gray-600 hover:text-(--color-primary) hover:bg-gray-100'
                   }`}
                 >
                   {item.label}
