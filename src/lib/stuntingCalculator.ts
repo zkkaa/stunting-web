@@ -234,3 +234,27 @@ export function generateDummyMeasurement(
 
   return { tinggi, berat: Math.max(berat, 0.5) };
 }
+
+// ----------------------------------------------------------------------------
+// 8. TINGGI & BERAT IDEAL (median WHO) — untuk ditampilkan ke user/orang tua
+//    Menggunakan sumber LMS yang SAMA PERSIS dengan status TB/U & BB/U di atas,
+//    supaya tidak ada dua sumber data berbeda yang bisa saling kontradiksi.
+// ----------------------------------------------------------------------------
+
+export interface IdealMeasurement {
+  idealHeightCm: number;
+  idealWeightKg: number;
+}
+
+export function getIdealMeasurements(ageDays: number, gender: Gender): IdealMeasurement {
+  const heightTable = (gender === "L" ? lhfaBoys : lhfaGirls) as LMSRow[];
+  const weightTable = (gender === "L" ? wfaBoys : wfaGirls) as LMSRow[];
+
+  const [, medianHeight] = getLMS(heightTable, ageDays);
+  const [, medianWeight] = getLMS(weightTable, ageDays);
+
+  return {
+    idealHeightCm: Math.round(medianHeight * 10) / 10,
+    idealWeightKg: Math.round(medianWeight * 10) / 10,
+  };
+}

@@ -8,6 +8,7 @@ import {
   calculateAgeInDays,
   calculateHeightStatus,
   calculateWeightStatus,
+  getIdealMeasurements,
   getStatusLabel,
   getStatusColor,
   getStatusDescription,
@@ -38,9 +39,11 @@ export default function HasilAnalisisPublikPage() {
   const ageDays = calculateAgeInDays(result.tanggalLahir);
   const heightStatus = calculateHeightStatus(result.heightCm, ageDays, result.gender);
   const weightStatus = calculateWeightStatus(result.weightKg, ageDays, result.gender);
-
   const heightColors = getStatusColor(heightStatus);
   const weightColors = getStatusColor(weightStatus);
+  const { idealHeightCm, idealWeightKg } = getIdealMeasurements(ageDays, result.gender);
+  const heightDiff = result.heightCm - idealHeightCm;
+  const weightDiff = result.weightKg - idealWeightKg;
 
   // Status gizi final = status TB/U (fokus utama: deteksi stunting), sesuai stuntingCalculator.ts
   const finalStatus = heightStatus;
@@ -127,6 +130,31 @@ export default function HasilAnalisisPublikPage() {
                 </div>
                 <p className="text-sm text-gray-500 mt-4 max-w-md mx-auto">{finalDescription}</p>
                 <p className="text-xs text-gray-400 mt-3">Confidence deteksi tinggi: {(result.confidence * 100).toFixed(1)}%</p>
+              </div>
+              {/* Tinggi & Berat Ideal — ditambahkan setelah blok Kesimpulan, sebelum </div> penutup px-6 sm:px-8 pb-8 */}
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <p className="text-center text-sm text-gray-600 font-medium mb-4">
+                  Referensi Ideal Sesuai Usia &amp; Jenis Kelamin (WHO)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="rounded-xl p-5 border border-gray-200 bg-gray-50 text-center">
+                    <p className="text-xs text-gray-500 mb-1">Tinggi Badan Ideal</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-800">{idealHeightCm} cm</p>
+                    <p className={`text-xs mt-2 font-medium ${heightDiff >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
+                      {heightDiff >= 0 ? '+' : ''}{heightDiff.toFixed(1)} cm dari ideal
+                    </p>
+                  </div>
+                  <div className="rounded-xl p-5 border border-gray-200 bg-gray-50 text-center">
+                    <p className="text-xs text-gray-500 mb-1">Berat Badan Ideal</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-800">{idealWeightKg} kg</p>
+                    <p className={`text-xs mt-2 font-medium ${weightDiff >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
+                      {weightDiff >= 0 ? '+' : ''}{weightDiff.toFixed(1)} kg dari ideal
+                    </p>
+                  </div>
+                </div>
+                <p className="text-center text-xs text-gray-400 mt-4">
+                  Nilai ideal merujuk pada median (nilai tengah) standar pertumbuhan WHO untuk usia {ageYears > 0 ? `${ageYears} tahun ` : ''}{ageMonthsDisplay} bulan, {result.gender === 'L' ? 'laki-laki' : 'perempuan'}.
+                </p>
               </div>
             </div>
           </div>
