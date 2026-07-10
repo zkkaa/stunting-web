@@ -9,19 +9,20 @@ interface PublicCameraCaptureProps {
   capturedImage: string | null; // dikontrol dari parent, supaya bisa direset dari luar
 }
 
-type Mode = 'modal' | 'camera' | 'uploaded';
+// Poin 1: 'uploaded' dihapus dari union type - tidak ada branch render yang memakainya,
+// capturedImage truthy sudah cukup untuk menangkap kondisi ini.
+type Mode = 'choose' | 'camera';
 
 export default function PublicCameraCapture({
   onImageReady,
   onReset,
   capturedImage,
 }: PublicCameraCaptureProps) {
-  // Modal pilihan tampil otomatis begitu komponen ini dimount (masuk halaman scan-publik),
-  // selama belum ada foto sama sekali. Ini meniru pola modal "Pilih Camera Pemindaian"
-  // di fitur scan yang butuh login.
-  const [mode, setMode] = useState<Mode>('modal');
+  const [mode, setMode] = useState<Mode>('choose');
   const [isInitializing, setIsInitializing] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  // Poin 3: guard rapid re-click - dicek secara sinkron via ref, tidak nunggu state update
+  const isStartingCameraRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,15 +37,11 @@ export default function PublicCameraCapture({
     return () => stopStream(); // cleanup saat unmount
   }, [stopStream]);
 
-  // Kalau parent me-reset capturedImage jadi null (misal lewat tombol "Ambil Ulang" di
-  // halaman lain / handleResetAll), munculkan lagi modal pilihan.
-  useEffect(() => {
-    if (!capturedImage && mode === 'uploaded') {
-      setMode('modal');
-    }
-  }, [capturedImage, mode]);
-
   const startCamera = async () => {
+    // Poin 3: kalau proses start sebelumnya masih berjalan, abaikan klik berikutnya
+    if (isStartingCameraRef.current) return;
+    isStartingCameraRef.current = true;
+
     setCameraError(null);
     setMode('camera');
     setIsInitializing(true);
@@ -60,22 +57,21 @@ export default function PublicCameraCapture({
       setCameraError('Tidak dapat mengakses kamera. Periksa izin kamera pada browser/device.');
     } finally {
       setIsInitializing(false);
+      isStartingCameraRef.current = false;
     }
-  };
-
-  const handleChooseCamera = () => {
-    startCamera();
-  };
-
-  const handleChooseUpload = () => {
-    setMode('uploaded'); // set dulu supaya modal hilang, file input dipicu langsung setelahnya
-    fileInputRef.current?.click();
   };
 
   const handleCapture = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || video.videoWidth === 0) return;
+    if (!video || !canvas) return;
+
+    // Poin 2: video belum benar-benar siap (belum ada frame) - beri feedback,
+    // jangan silent-fail seperti sebelumnya.
+    if (video.videoWidth === 0) {
+      setCameraError('Kamera belum siap. Tunggu sebentar lalu coba lagi.');
+      return;
+    }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -89,31 +85,24 @@ export default function PublicCameraCapture({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) {
-      // User membatalkan dialog upload -> kembali ke modal pilihan
-      setMode('modal');
-      return;
-    }
+    if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
       onImageReady(reader.result as string);
+      // Poin 1: setMode('uploaded') dihapus - tidak ada gunanya, capturedImage
+      // truthy sudah otomatis menampilkan branch hasil foto di bawah.
     };
     reader.readAsDataURL(file);
   };
 
   const handleReset = () => {
     stopStream();
-    setMode('modal');
+    setMode('choose');
     setCameraError(null);
+    isStartingCameraRef.current = false;
     if (fileInputRef.current) fileInputRef.current.value = '';
     onReset();
-  };
-
-  const handleCancelCamera = () => {
-    stopStream();
-    setCameraError(null);
-    setMode('modal');
   };
 
   // ----- Sudah ada hasil foto (dari kamera atau upload) -----
@@ -131,14 +120,6 @@ export default function PublicCameraCapture({
           <FiRefreshCw className="w-4 h-4" />
           Ambil Ulang
         </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
       </div>
     );
   }
@@ -167,14 +148,14 @@ export default function PublicCameraCapture({
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
           <button
             onClick={handleCapture}
-            disabled={isInitializing || !!cameraError}
+            disabled={isInitializing}
             className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-[#407A81] text-white hover:bg-[#326269] disabled:opacity-50 font-medium"
           >
             <FiCamera className="w-5 h-5" />
             Ambil Foto
           </button>
           <button
-            onClick={handleCancelCamera}
+            onClick={handleReset}
             className="px-4 py-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium"
           >
             Batal
@@ -186,47 +167,32 @@ export default function PublicCameraCapture({
     );
   }
 
-  // ----- Modal pilihan (default saat masuk halaman / setelah reset) -----
+  // ----- Mode pilih (default) -----
   return (
-    <>
-      {/* Placeholder di balik modal, supaya layout halaman tidak "kosong" saat modal terbuka */}
-      <div className="w-full py-10 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-sm text-gray-400">
-        Belum ada foto — pilih metode pemindaian
-      </div>
+    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <button
+        onClick={startCamera}
+        className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-[#407A81] text-[#407A81] hover:bg-[#E7F5F7] transition-colors"
+      >
+        <FiCamera className="w-8 h-8" />
+        <span className="font-medium">Gunakan Kamera</span>
+      </button>
 
-      <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-auto shadow-xl">
-          <h2 className="text-xl font-semibold text-center text-gray-900 mb-6">
-            Pilih Metode Pemindaian
-          </h2>
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors"
+      >
+        <FiUpload className="w-8 h-8" />
+        <span className="font-medium">Upload Foto</span>
+      </button>
 
-          <div className="space-y-4">
-            <button
-              onClick={handleChooseCamera}
-              className="w-full inline-flex items-center justify-center gap-2 border-2 border-[#407A81] text-[#407A81] py-3 px-6 rounded-lg hover:bg-[#407A81] hover:text-white transition-colors font-medium"
-            >
-              <FiCamera className="w-5 h-5" />
-              Gunakan Kamera
-            </button>
-
-            <button
-              onClick={handleChooseUpload}
-              className="w-full inline-flex items-center justify-center gap-2 border-2 border-[#407A81] text-[#407A81] py-3 px-6 rounded-lg hover:bg-[#407A81] hover:text-white transition-colors font-medium"
-            >
-              <FiUpload className="w-5 h-5" />
-              Upload Foto
-            </button>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </div>
-      </div>
-    </>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+    </div>
   );
 }

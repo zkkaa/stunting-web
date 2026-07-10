@@ -1,4 +1,3 @@
-
 export interface OrangTua {
     id: string;
     nama: string;
