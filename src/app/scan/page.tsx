@@ -175,7 +175,7 @@ function ScanPageContent() {
                     
                     {/* Filter Dropdown Content */}
                     {showFilters && (
-                      <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] max-w-[calc(100vw-2rem)] overflow-hidden">
+                      <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-9999 max-w-[calc(100vw-2rem)] overflow-hidden">
                         <div className="p-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-3">Urutkan:</label>

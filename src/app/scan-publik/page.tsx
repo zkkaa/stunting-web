@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Layout } from '@/components';
-import PublicCameraCapture from '@/components/scan-publik/PublicCameraCapture';
+import PublicCameraCapture from '@/components/CameraCapture';
 import { PublicScanResult, SESSION_KEY_SCAN_RESULT } from '@/types/scanPublik';
 import { Gender } from '@/lib/stuntingCalculator';
 import { FiChevronDown, FiArrowRightCircle } from 'react-icons/fi';

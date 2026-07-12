@@ -61,27 +61,29 @@ export default function PublicCameraCapture({
     }
   };
 
-  const handleCapture = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
+  // 2. handleCapture — koreksi canvas supaya hasil capture tidak ikut mirror
+const handleCapture = () => {
+  const video = videoRef.current;
+  const canvas = canvasRef.current;
+  if (!video || !canvas) return;
 
-    // Poin 2: video belum benar-benar siap (belum ada frame) - beri feedback,
-    // jangan silent-fail seperti sebelumnya.
-    if (video.videoWidth === 0) {
-      setCameraError('Kamera belum siap. Tunggu sebentar lalu coba lagi.');
-      return;
-    }
+  if (video.videoWidth === 0) {
+    setCameraError('Kamera belum siap. Tunggu sebentar lalu coba lagi.');
+    return;
+  }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-    stopStream();
-    onImageReady(dataUrl);
-  };
+  if (ctx) {
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  }
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  stopStream();
+  onImageReady(dataUrl);
+};
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -129,7 +131,14 @@ export default function PublicCameraCapture({
     return (
       <div className="w-full">
         <div className="relative w-full rounded-xl overflow-hidden bg-black">
-          <video ref={videoRef} autoPlay playsInline muted className="w-full max-h-105 object-contain mx-auto" />
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full max-h-105 object-contain mx-auto"
+            style={{ transform: 'scaleX(-1)' }}
+          />
           {isInitializing && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
               <div className="text-white text-sm">Menginisialisasi kamera...</div>

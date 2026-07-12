@@ -4,291 +4,84 @@ export interface UploadResult {
   success: boolean;
   url?: string;
   error?: string;
-  fileName?: string;
 }
 
-export const uploadProfileImage = async (
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
+type ProfileBucket = 'orang-tua' | 'anak';
+
+function validateImageFile(file: File): string | null {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return 'Tipe file tidak didukung. Gunakan JPEG, PNG, atau WebP.';
+  }
+  if (file.size > MAX_SIZE_BYTES) {
+    return 'Ukuran file terlalu besar. Maksimal 5MB.';
+  }
+  return null;
+}
+
+/**
+ * Upload foto profil (orang tua atau anak) ke bucket yang sesuai.
+ * Path disusun per-NIK supaya rapi & mudah di-cleanup saat data dihapus.
+ */
+export async function uploadProfileImage(
   file: File,
-  userId: string
-): Promise<UploadResult> => {
+  nik: string,
+  bucket: ProfileBucket
+): Promise<UploadResult> {
+  const validationError = validateImageFile(file);
+  if (validationError) {
+    return { success: false, error: validationError };
+  }
+
   try {
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return {
-        success: false,
-        error: 'File type not supported. Please use JPEG, PNG, or WebP.'
-      };
-    }
-
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      return {
-        success: false,
-        error: 'File size too large. Maximum size is 5MB.'
-      };
-    }
-
-    // Generate unique filename
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const fileName = `${nik}-${Date.now()}.${fileExt}`;
+    const filePath = `${nik}/${fileName}`;
 
-    // Upload file to Supabase Storage
-    const { error } = await supabase.storage
-      .from('profile-images')
-      .upload(fileName, file, {
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
       });
 
-    if (error) {
-      console.error('Upload error:', error);
-      return {
-        success: false,
-        error: 'Failed to upload image. Please try again.'
-      };
+    if (uploadError) {
+      console.error(`Error uploading to ${bucket}:`, uploadError);
+      return { success: false, error: 'Gagal mengunggah gambar. Silakan coba lagi.' };
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('profile-images')
-      .getPublicUrl(fileName);
-
-    return {
-      success: true,
-      url: urlData.publicUrl
-    };
+    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return { success: true, url: data.publicUrl };
   } catch (error) {
-    console.error('Upload error:', error);
-    return {
-      success: false,
-      error: 'An unexpected error occurred. Please try again.'
-    };
+    console.error(`Unexpected error uploading to ${bucket}:`, error);
+    return { success: false, error: 'Terjadi kesalahan tak terduga.' };
   }
-};
+}
 
-export const deleteProfileImage = async (userId: string): Promise<boolean> => {
+/**
+ * Hapus foto profil dari storage berdasarkan public URL yang tersimpan di DB.
+ * Aman dipanggil dengan imageUrl null/undefined - langsung no-op.
+ */
+export async function deleteProfileImage(
+  imageUrl: string | null | undefined,
+  bucket: ProfileBucket
+): Promise<void> {
+  if (!imageUrl) return;
+
   try {
-    // List all files with userId prefix
-    const { data: files, error: listError } = await supabase.storage
-      .from('profile-images')
-      .list('', {
-        search: userId
-      });
-
-    if (listError) {
-      console.error('List error:', listError);
-      return false;
+    const pathMatch = imageUrl.match(new RegExp(`/storage/v1/object/public/${bucket}/(.+)$`));
+    if (!pathMatch) {
+      console.warn(`Could not extract path from ${bucket} image URL:`, imageUrl);
+      return;
     }
 
-    if (!files || files.length === 0) {
-      return true; // No files to delete
-    }
-
-    // Extract filenames
-    const fileNames = files.map(file => file.name);
-
-    // Delete all files with userId prefix
-    const { error } = await supabase.storage
-      .from('profile-images')
-      .remove(fileNames);
-
+    const { error } = await supabase.storage.from(bucket).remove([pathMatch[1]]);
     if (error) {
-      console.error('Delete error:', error);
-      return false;
+      console.error(`Error deleting from ${bucket}:`, error);
     }
-
-    return true;
   } catch (error) {
-    console.error('Delete error:', error);
-    return false;
+    console.error(`Unexpected error deleting from ${bucket}:`, error);
   }
-};
-
-export const getTempImageUrl = (fileName: string): string => {
-  const { data } = supabase.storage
-    .from('temp')
-    .getPublicUrl(fileName);
-  
-  return data.publicUrl;
-};
-
-export const uploadTempImage = async (
-  file: File,
-  fileName: string
-): Promise<UploadResult> => {
-  try {
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return {
-        success: false,
-        error: 'File type not supported. Please use JPEG, PNG, or WebP.'
-      };
-    }
-
-    // Upload file to temp bucket
-    const { error } = await supabase.storage
-      .from('temp')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: true // Allow overwriting
-      });
-
-    if (error) {
-      console.error('Upload error:', error);
-      return {
-        success: false,
-        error: 'Failed to upload image. Please try again.'
-      };
-    }
-
-    // Get public URL
-    const url = getTempImageUrl(fileName);
-
-    return {
-      success: true,
-      url
-    };
-  } catch (error) {
-    console.error('Upload error:', error);
-    return {
-      success: false,
-      error: 'An unexpected error occurred. Please try again.'
-    };
-  }
-};
-
-export const uploadTempImageWithPath = async (
-  blob: Blob,
-  childNik: string,
-  timestamp: string
-): Promise<UploadResult> => {
-  try {
-    // Validate blob type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(blob.type)) {
-      return {
-        success: false,
-        error: 'File type not supported. Please use JPEG, PNG, or WebP.'
-      };
-    }
-
-    // Create structured path: childNik/timestamp/capture.jpg
-    const fileName = `${childNik}/${timestamp}/capture.jpg`;
-    
-    console.log('📁 Uploading to temp bucket with path:', fileName);
-
-    // Upload file to temp bucket with structured path
-    const { error } = await supabase.storage
-      .from('temp')
-      .upload(fileName, blob, {
-        cacheControl: '3600',
-        upsert: true // Allow overwriting
-      });
-
-    if (error) {
-      console.error('Upload error:', error);
-      return {
-        success: false,
-        error: 'Failed to upload image. Please try again.'
-      };
-    }
-
-    // Get public URL
-    const url = getTempImageUrl(fileName);
-
-    console.log('✅ Upload successful, URL:', url);
-
-    return {
-      success: true,
-      url,
-      fileName // Return the structured path for reference
-    };
-  } catch (error) {
-    console.error('Upload error:', error);
-    return {
-      success: false,
-      error: 'An unexpected error occurred. Please try again.'
-    };
-  }
-};
-
-export const downloadProcessedImage = async (
-  apiBaseUrl: string,
-  imageName: string
-): Promise<Blob | null> => {
-  try {
-    const downloadUrl = `${apiBaseUrl}/images/${imageName}`;
-    console.log('📥 Downloading processed image from:', downloadUrl);
-    console.log('🔍 API Base URL:', apiBaseUrl);
-    console.log('🖼️ Image Name:', imageName);
-    
-    const response = await fetch(downloadUrl, {
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'accept': 'image/*',
-      },
-    });
-    
-    console.log('📡 Download response:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-    
-    if (!response.ok) {
-      console.error('❌ Failed to download processed image:', response.status, response.statusText);
-      
-      // Try alternative endpoints
-      const alternatives = [
-        `${apiBaseUrl}/result/${imageName}`,
-        `${apiBaseUrl}/processed/${imageName}`,
-        `${apiBaseUrl}/output/${imageName}`
-      ];
-      
-      for (const altUrl of alternatives) {
-        console.log('🔄 Trying alternative endpoint:', altUrl);
-        try {
-          const altResponse = await fetch(altUrl, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-              'accept': 'image/*',
-            },
-          });
-          
-          if (altResponse.ok) {
-            console.log('✅ Success with alternative endpoint:', altUrl);
-            const blob = await altResponse.blob();
-            console.log('✅ Downloaded processed image via alternative:', {
-              size: blob.size,
-              type: blob.type,
-              endpoint: altUrl
-            });
-            return blob;
-          }
-        } catch (altError) {
-          console.log('❌ Alternative endpoint failed:', altUrl, altError);
-        }
-      }
-      
-      return null;
-    }
-    
-    const blob = await response.blob();
-    console.log('✅ Downloaded processed image successfully:', {
-      size: blob.size,
-      type: blob.type,
-      url: downloadUrl
-    });
-    
-    return blob;
-  } catch (error) {
-    console.error('❌ Error downloading processed image:', error);
-    return null;
-  }
-};
+}

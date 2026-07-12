@@ -1,208 +1,450 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
+import {
+  KeluargaDetail,
+  NewOrangTuaPayload,
+  OrangTua,
+  Alamat,
+  Anak,
+  AnakWithOrangTua,
+  NewAnakPayload,
+  UpdateAnakPayload,
+  RiwayatScan,
+  RiwayatScanWithAnak,
+  NewRiwayatScanPayload,
+} from "@/types";
+import { deleteProfileImage, uploadProfileImage } from "./storage";
 
-// Test RLS and permissions
-export const testRLSAndPermissions = async () => {
-  try {
-    console.log('Testing RLS and permissions...');
-    
-    // Test 1: Try to get all data from DataOrangTua
-    const { data: allData, error: allError } = await supabase
-      .from('DataOrangTua')
-      .select('*');
-    
-    console.log('All DataOrangTua data:', { allData, allError });
-    console.log('Number of records:', allData?.length || 0);
-    
-    // Test 2: Try to get all data from DataKeluarga
-    const { data: keluargaData, error: keluargaError } = await supabase
-      .from('DataKeluarga')
-      .select('*');
-    
-    console.log('All DataKeluarga data:', { keluargaData, keluargaError });
-    console.log('Number of families:', keluargaData?.length || 0);
-    
-    // Test 3: Try to get all data from DataAnak
-    const { data: anakData, error: anakError } = await supabase
-      .from('DataAnak')
-      .select('*');
-    
-    console.log('All DataAnak data:', { anakData, anakError });
-    console.log('Number of children:', anakData?.length || 0);
-    
-    return { success: true };
-  } catch (err) {
-    console.error('RLS test failed:', err);
-    return { success: false, error: err };
-  }
-};
+// ============================================================================
+// KELUARGA & ORANG TUA
+// ============================================================================
 
-// Test function to check Supabase connection
-export const testSupabaseConnection = async () => {
-  try {
-    console.log('Testing Supabase connection with correct flow...');
-    
-    // Test 1: DataKeluarga (Primary table)
-    console.log('Testing DataKeluarga...');
-    const { data: familiesData, error: familiesError } = await supabase
-      .from('DataKeluarga')
-      .select('no_kk')
-      .limit(1);
-    
-    console.log('DataKeluarga result:', { familiesData, familiesError });
-    
-    if (familiesError) {
-      console.error('DataKeluarga failed:', familiesError);
-      return { success: false, error: familiesError };
-    }
-    
-    // Test 2: DataOrangTua (Foreign table)
-    console.log('Testing DataOrangTua...');
-    const { data: parentsData, error: parentsError } = await supabase
-      .from('DataOrangTua')
-      .select('nik, nama, role, no_kk')
-      .limit(1);
-    
-    console.log('DataOrangTua result:', { parentsData, parentsError });
-    
-    if (parentsError) {
-      console.error('DataOrangTua failed:', parentsError);
-      return { success: false, error: parentsError };
-    }
-    
-    // Test 3: DataAnak (Foreign table)
-    console.log('Testing DataAnak...');
-    const { data: childrenData, error: childrenError } = await supabase
-      .from('DataAnak')
-      .select('no_kk')
-      .limit(1);
-    
-    console.log('DataAnak result:', { childrenData, childrenError });
-    
-    if (childrenError) {
-      console.error('DataAnak failed:', childrenError);
-      return { success: false, error: childrenError };
-    }
-    
-    console.log('✅ All tables accessible!');
-    return { 
-      success: true, 
-      error: null, 
-      data: { familiesData, parentsData, childrenData } 
+/** Daftar keluarga untuk halaman list "Orang Tua" - 1 row per KK. */
+export async function fetchKeluargaList(): Promise<KeluargaDetail[]> {
+  const { data: orangTuaData, error: otError } = await supabase
+    .from("orang_tua")
+    .select("*");
+  if (otError) throw otError;
+  if (!orangTuaData || orangTuaData.length === 0) return [];
+
+  const uniqueNoKk = [...new Set(orangTuaData.map((p) => p.no_kk))];
+
+  const { data: anakData, error: anakError } = await supabase
+    .from("anak")
+    .select("no_kk")
+    .eq("aktif", true)
+    .in("no_kk", uniqueNoKk);
+  if (anakError) throw anakError;
+
+  const { data: alamatData, error: alamatError } = await supabase
+    .from("alamat")
+    .select("*")
+    .in("no_kk", uniqueNoKk);
+  if (alamatError) throw alamatError;
+
+  const jumlahAnakMap = new Map<string, number>();
+  anakData?.forEach((a) => {
+    jumlahAnakMap.set(a.no_kk, (jumlahAnakMap.get(a.no_kk) || 0) + 1);
+  });
+
+  const alamatMap = new Map<string, Alamat>();
+  alamatData?.forEach((a) => alamatMap.set(a.no_kk, a));
+
+  const result: KeluargaDetail[] = uniqueNoKk.map((no_kk) => {
+    const parents = orangTuaData.filter((p) => p.no_kk === no_kk);
+    return {
+      no_kk,
+      ayah: parents.find((p) => p.role === "ayah") || null,
+      ibu: parents.find((p) => p.role === "ibu") || null,
+      alamat: alamatMap.get(no_kk) || null,
+      jumlah_anak: jumlahAnakMap.get(no_kk) || 0,
     };
-  } catch (err) {
-    console.error('Supabase connection test failed:', err);
-    return { success: false, error: err };
-  }
-};
+  });
 
-export interface ParentData {
-  id: string;
-  fatherName: string;
-  motherName: string;
-  nik: string;
-  childrenCount: number;
-  fatherImage: string;
-  motherImage: string;
-  no_kk: string;
+  return result;
 }
 
-export const fetchParentsData = async (): Promise<ParentData[]> => {
-  try {
-    console.log('🚀 Starting to fetch parents data...');
-    
-    // Direct approach: Get all parents from DataOrangTua
-    console.log('📋 Step 1: Fetching all parents from DataOrangTua...');
-    const { data: allParentsData, error: allParentsError } = await supabase
-      .from('DataOrangTua')
-      .select('nik, nama, role, no_kk');
-      
-    console.log('👥 All parents data:', { allParentsData, allParentsError });
-    console.log('📊 Number of parents found:', allParentsData?.length || 0);
-    
-    if (allParentsError) {
-      console.error('❌ Error fetching parents data:', allParentsError);
-      throw allParentsError;
-    }
-    
-    if (!allParentsData || allParentsData.length === 0) {
-      console.log('⚠️ No parents found in DataOrangTua');
-      return [];
-    }
-    
-    // Extract unique no_kk from parents
-    const uniqueNoKk = [...new Set(allParentsData.map(parent => parent.no_kk))];
-    console.log('🏠 Unique no_kk from parents:', uniqueNoKk);
-    
-    // Get children count for these families
-    console.log('👶 Step 2: Fetching children count from DataAnak...');
-    const { data: childrenData, error: childrenError } = await supabase
-      .from('DataAnak')
-      .select('no_kk')
-      .in('no_kk', uniqueNoKk);
-      
-    console.log('👶 Children data result:', { childrenData, childrenError });
-    console.log('📊 Number of children found:', childrenData?.length || 0);
+/** Detail 1 keluarga (untuk halaman detail/edit orang tua), termasuk daftar anak. */
+export async function fetchKeluargaDetail(no_kk: string): Promise<{
+  ayah: OrangTua | null;
+  ibu: OrangTua | null;
+  alamat: Alamat | null;
+  anak: Anak[];
+}> {
+  const [
+    { data: orangTuaData, error: otError },
+    { data: alamatData, error: alamatError },
+    { data: anakData, error: anakError },
+  ] = await Promise.all([
+    supabase.from("orang_tua").select("*").eq("no_kk", no_kk),
+    supabase.from("alamat").select("*").eq("no_kk", no_kk).single(),
+    supabase
+      .from("anak")
+      .select("*")
+      .eq("no_kk", no_kk)
+      .eq("aktif", true)
+      .order("created_at", { ascending: false }),
+  ]);
 
-    if (childrenError) {
-      console.error('❌ Error fetching children data:', childrenError);
-      // Don't throw, just continue with 0 children count
-    }
+  if (otError) throw otError;
+  if (anakError) throw anakError;
+  // alamatError diabaikan kalau memang belum ada alamat (single() bisa error "no rows")
 
-    // Group parents by family (no_kk)
-    console.log('👨‍👩‍👧‍👦 Step 3: Grouping parents by family...');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const familyGroups: { [key: string]: { father?: Record<string, any>; mother?: Record<string, any>; no_kk: string } } = {};
+  return {
+    ayah: orangTuaData?.find((p) => p.role === "ayah") || null,
+    ibu: orangTuaData?.find((p) => p.role === "ibu") || null,
+    alamat: alamatError ? null : alamatData,
+    anak: anakData || [],
+  };
+}
 
-    // Initialize families from parents data
-    uniqueNoKk.forEach(no_kk => {
-      familyGroups[no_kk] = { no_kk };
-    });
+/** Insert keluarga baru: keluarga -> orang_tua (ayah+ibu) -> alamat, dalam satu alur. */
+export async function insertKeluargaWithOrangTua(
+  payload: NewOrangTuaPayload,
+  fotoAyah?: File,
+  fotoIbu?: File,
+): Promise<void> {
+  const { error: keluargaError } = await supabase
+    .from("keluarga")
+    .insert({ no_kk: payload.no_kk });
+  if (keluargaError) throw keluargaError;
 
-    // Add parents to their families
-    allParentsData.forEach(parent => {
-      const no_kk = parent.no_kk;
-      if (familyGroups[no_kk]) {
-        if (parent.role === 'ayah') {
-          familyGroups[no_kk].father = parent;
-          console.log(`👨 Added father: ${parent.nama} to family ${no_kk}`);
-        } else if (parent.role === 'ibu') {
-          familyGroups[no_kk].mother = parent;
-          console.log(`👩 Added mother: ${parent.nama} to family ${no_kk}`);
-        }
-      }
-    });
+  let fotoAyahUrl: string | null = null;
+  let fotoIbuUrl: string | null = null;
 
-    console.log('🏠 Family groups:', familyGroups);
-
-    // Count children per family
-    console.log('🔢 Step 4: Counting children per family...');
-    const childrenCount: { [key: string]: number } = {};
-    childrenData?.forEach(child => {
-      childrenCount[child.no_kk] = (childrenCount[child.no_kk] || 0) + 1;
-    });
-
-    console.log('👶 Children count:', childrenCount);
-
-    // Transform data to ParentData format
-    console.log('🔄 Step 5: Transforming data...');
-    const result: ParentData[] = Object.values(familyGroups)
-      .filter(family => family.father || family.mother) // Include families with at least one parent
-      .map((family, index) => ({
-        id: String(index + 1),
-        fatherName: family.father?.nama || 'Tidak ada',
-        motherName: family.mother?.nama || 'Tidak ada',
-        nik: family.no_kk,
-        childrenCount: childrenCount[family.no_kk] || 0,
-        fatherImage: '/image/icon/pengukuran-anak.jpg', // Default image
-        motherImage: '/image/icon/pengukuran-anak.jpg', // Default image
-        no_kk: family.no_kk,
-      }));
-
-    console.log('✅ Final result:', result);
-    console.log('📊 Total families to display:', result.length);
-    return result;
-  } catch (error) {
-    console.error('❌ Error in fetchParentsData:', error);
-    return [];
+  if (fotoAyah) {
+    const result = await uploadProfileImage(
+      fotoAyah,
+      payload.ayah.nik,
+      "orang-tua",
+    );
+    if (result.success) fotoAyahUrl = result.url || null;
   }
-};
+  if (fotoIbu) {
+    const result = await uploadProfileImage(
+      fotoIbu,
+      payload.ibu.nik,
+      "orang-tua",
+    );
+    if (result.success) fotoIbuUrl = result.url || null;
+  }
+
+  const { error: orangTuaError } = await supabase.from("orang_tua").insert([
+    {
+      ...payload.ayah,
+      no_kk: payload.no_kk,
+      role: "ayah",
+      foto_profil: fotoAyahUrl,
+    },
+    {
+      ...payload.ibu,
+      no_kk: payload.no_kk,
+      role: "ibu",
+      foto_profil: fotoIbuUrl,
+    },
+  ]);
+  if (orangTuaError) throw orangTuaError;
+
+  const { error: alamatError } = await supabase
+    .from("alamat")
+    .insert({ ...payload.alamat, no_kk: payload.no_kk });
+  if (alamatError) throw alamatError;
+}
+
+/** Update data orang tua (ayah dan/atau ibu) + alamat untuk 1 KK. */
+export async function updateOrangTuaData(
+  no_kk: string,
+  updates: {
+    ayah?: Partial<
+      Pick<OrangTua, "nama" | "tempat_lahir" | "tanggal_lahir" | "no_hp">
+    >;
+    ibu?: Partial<
+      Pick<OrangTua, "nama" | "tempat_lahir" | "tanggal_lahir" | "no_hp">
+    >;
+    alamat?: Partial<
+      Pick<
+        Alamat,
+        "provinsi" | "kota" | "kecamatan" | "desa" | "jalan" | "kode_pos"
+      >
+    >;
+  },
+): Promise<void> {
+  if (updates.ayah) {
+    const { error } = await supabase
+      .from("orang_tua")
+      .update(updates.ayah)
+      .eq("no_kk", no_kk)
+      .eq("role", "ayah");
+    if (error) throw error;
+  }
+  if (updates.ibu) {
+    const { error } = await supabase
+      .from("orang_tua")
+      .update(updates.ibu)
+      .eq("no_kk", no_kk)
+      .eq("role", "ibu");
+    if (error) throw error;
+  }
+  if (updates.alamat) {
+    const { error } = await supabase
+      .from("alamat")
+      .update(updates.alamat)
+      .eq("no_kk", no_kk);
+    if (error) throw error;
+  }
+}
+
+/** Hapus 1 keluarga beserta seluruh data terkait (CASCADE via FK), termasuk foto di storage. */
+export async function deleteKeluarga(no_kk: string): Promise<void> {
+  const { data: orangTuaData } = await supabase
+    .from("orang_tua")
+    .select("foto_profil")
+    .eq("no_kk", no_kk);
+
+  const { data: anakData } = await supabase
+    .from("anak")
+    .select("foto_profil")
+    .eq("no_kk", no_kk);
+
+  if (orangTuaData) {
+    await Promise.all(
+      orangTuaData.map((p) => deleteProfileImage(p.foto_profil, "orang-tua")),
+    );
+  }
+  if (anakData) {
+    await Promise.all(
+      anakData.map((a) => deleteProfileImage(a.foto_profil, "anak")),
+    );
+  }
+
+  // Hapus keluarga -> CASCADE otomatis menghapus alamat, orang_tua, anak, riwayat_scan terkait
+  const { error } = await supabase.from("keluarga").delete().eq("no_kk", no_kk);
+  if (error) throw error;
+}
+
+// ============================================================================
+// ANAK
+// ============================================================================
+
+export async function fetchAnakList(): Promise<Anak[]> {
+  const { data, error } = await supabase
+    .from("anak")
+    .select("*")
+    .eq("aktif", true)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function fetchAnakByNik(nik: string): Promise<Anak | null> {
+  const { data, error } = await supabase
+    .from("anak")
+    .select("*")
+    .eq("nik", nik)
+    .eq("aktif", true)
+    .single();
+  if (error) {
+    if (error.code === "PGRST116") return null; // no rows
+    throw error;
+  }
+  return data;
+}
+
+/** Detail anak + nama orang tua, untuk halaman detail anak. */
+export async function fetchAnakWithOrangTuaByNik(
+  nik: string,
+): Promise<AnakWithOrangTua | null> {
+  const anak = await fetchAnakByNik(nik);
+  if (!anak) return null;
+
+  const { data: orangTuaData } = await supabase
+    .from("orang_tua")
+    .select("nama, role")
+    .eq("no_kk", anak.no_kk);
+
+  return {
+    ...anak,
+    orang_tua: {
+      ayah: orangTuaData?.find((p) => p.role === "ayah")?.nama,
+      ibu: orangTuaData?.find((p) => p.role === "ibu")?.nama,
+    },
+  };
+}
+
+/** Insert anak baru - no_kk harus sudah terdaftar di tabel keluarga. */
+export async function insertAnak(
+  payload: NewAnakPayload,
+  fotoAnak?: File,
+): Promise<Anak> {
+  const { data: keluargaExists, error: checkError } = await supabase
+    .from("keluarga")
+    .select("no_kk")
+    .eq("no_kk", payload.no_kk)
+    .limit(1);
+  if (checkError) throw checkError;
+  if (!keluargaExists || keluargaExists.length === 0) {
+    throw new Error(
+      "No KK tidak ditemukan. Daftarkan orang tua terlebih dahulu.",
+    );
+  }
+
+  let fotoUrl: string | null = null;
+  if (fotoAnak) {
+    const { uploadProfileImage } = await import("./storage");
+    const result = await uploadProfileImage(fotoAnak, payload.nik, "anak");
+    if (result.success) fotoUrl = result.url || null;
+  }
+
+  const { data, error } = await supabase
+    .from("anak")
+    .insert({ ...payload, foto_profil: fotoUrl })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateAnak(
+  nik: string,
+  payload: UpdateAnakPayload,
+  fotoAnak?: File,
+): Promise<void> {
+  let fotoUrl: string | undefined;
+  if (fotoAnak) {
+    const existing = await fetchAnakByNik(nik);
+    if (existing?.foto_profil) {
+      await deleteProfileImage(existing.foto_profil, "anak");
+    }
+    const { uploadProfileImage } = await import("./storage");
+    const result = await uploadProfileImage(fotoAnak, nik, "anak");
+    if (result.success) fotoUrl = result.url;
+  }
+
+  const { error } = await supabase
+    .from("anak")
+    .update({ ...payload, ...(fotoUrl && { foto_profil: fotoUrl }) })
+    .eq("nik", nik);
+  if (error) throw error;
+}
+
+/**
+ * Hapus anak secara PERMANEN, termasuk seluruh riwayat_scan terkait (CASCADE)
+ * dan foto profil di storage. TIDAK BISA DIBATALKAN.
+ * UI wajib menampilkan konfirmasi/peringatan sebelum memanggil fungsi ini,
+ * karena ini akan menghapus seluruh histori scan anak tersebut juga.
+ */
+export async function deleteAnak(nik: string): Promise<void> {
+  const anak = await fetchAnakByNik(nik);
+  if (anak?.foto_profil) {
+    await deleteProfileImage(anak.foto_profil, 'anak');
+  }
+
+  // Hapus anak -> CASCADE otomatis menghapus seluruh riwayat_scan terkait
+  const { error } = await supabase.from('anak').delete().eq('nik', nik);
+  if (error) throw error;
+}
+
+// ============================================================================
+// RIWAYAT SCAN
+// ============================================================================
+
+/** Simpan hasil scan (setelah login) - TIDAK ADA field gambar, sesuai desain. */
+export async function insertRiwayatScan(
+  payload: NewRiwayatScanPayload,
+): Promise<RiwayatScan> {
+  const { data, error } = await supabase
+    .from("riwayat_scan")
+    .insert(payload)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/** Daftar seluruh riwayat scan (halaman History), join dengan identitas anak. */
+export async function fetchRiwayatScanHistory(): Promise<
+  RiwayatScanWithAnak[]
+> {
+  const { data, error } = await supabase
+    .from("riwayat_scan")
+    .select(
+      `
+      *,
+      anak!inner (
+        nama,
+        gender,
+        tanggal_lahir
+      )
+    `,
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  return (data || []).map((row) => ({
+    ...row,
+    anak: Array.isArray(row.anak) ? row.anak[0] : row.anak,
+  }));
+}
+
+/** Riwayat scan untuk 1 anak spesifik (dipakai di halaman detail anak). */
+export async function fetchRiwayatScanByNik(
+  nik: string,
+): Promise<RiwayatScan[]> {
+  const { data, error } = await supabase
+    .from("riwayat_scan")
+    .select("*")
+    .eq("nik", nik)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+/** Detail 1 riwayat scan (halaman detail history) - identitas anak + hasil analisis, tanpa gambar. */
+export async function fetchRiwayatScanDetail(
+  id: string,
+): Promise<RiwayatScanWithAnak | null> {
+  const { data, error } = await supabase
+    .from("riwayat_scan")
+    .select(
+      `
+      *,
+      anak!inner (
+        nama,
+        gender,
+        tanggal_lahir
+      )
+    `,
+    )
+    .eq("id", id)
+    .single();
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return { ...data, anak: Array.isArray(data.anak) ? data.anak[0] : data.anak };
+}
+
+export async function deleteRiwayatScan(id: string): Promise<void> {
+  const { error } = await supabase.from("riwayat_scan").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/** Ringkasan jumlah per status_gizi, untuk kartu summary di halaman History. */
+export async function fetchRiwayatScanSummary(): Promise<
+  Record<string, number>
+> {
+  const { data, error } = await supabase
+    .from("riwayat_scan")
+    .select("status_gizi");
+  if (error) throw error;
+
+  const summary: Record<string, number> = {
+    stunting_parah: 0,
+    stunting: 0,
+    normal: 0,
+    tinggi: 0,
+  };
+  data?.forEach((row) => {
+    summary[row.status_gizi] = (summary[row.status_gizi] || 0) + 1;
+  });
+  return summary;
+}
