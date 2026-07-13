@@ -3,25 +3,18 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FiCamera, FiUpload, FiRefreshCw } from 'react-icons/fi';
 
-interface PublicCameraCaptureProps {
-  onImageReady: (dataUrl: string) => void; // dipanggil tiap ada foto baru (capture/upload)
-  onReset: () => void; // dipanggil saat user klik "Ambil Ulang"
-  capturedImage: string | null; // dikontrol dari parent, supaya bisa direset dari luar
+interface CameraCaptureProps {
+  onImageReady: (dataUrl: string) => void;
+  onReset: () => void;
+  capturedImage: string | null;
 }
 
-// Poin 1: 'uploaded' dihapus dari union type - tidak ada branch render yang memakainya,
-// capturedImage truthy sudah cukup untuk menangkap kondisi ini.
 type Mode = 'choose' | 'camera';
 
-export default function PublicCameraCapture({
-  onImageReady,
-  onReset,
-  capturedImage,
-}: PublicCameraCaptureProps) {
+export default function CameraCapture({ onImageReady, onReset, capturedImage }: CameraCaptureProps) {
   const [mode, setMode] = useState<Mode>('choose');
   const [isInitializing, setIsInitializing] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  // Poin 3: guard rapid re-click - dicek secara sinkron via ref, tidak nunggu state update
   const isStartingCameraRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,11 +27,10 @@ export default function PublicCameraCapture({
   }, []);
 
   useEffect(() => {
-    return () => stopStream(); // cleanup saat unmount
+    return () => stopStream();
   }, [stopStream]);
 
   const startCamera = async () => {
-    // Poin 3: kalau proses start sebelumnya masih berjalan, abaikan klik berikutnya
     if (isStartingCameraRef.current) return;
     isStartingCameraRef.current = true;
 
@@ -61,29 +53,25 @@ export default function PublicCameraCapture({
     }
   };
 
-  // 2. handleCapture — koreksi canvas supaya hasil capture tidak ikut mirror
-const handleCapture = () => {
-  const video = videoRef.current;
-  const canvas = canvasRef.current;
-  if (!video || !canvas) return;
+  const handleCapture = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
 
-  if (video.videoWidth === 0) {
-    setCameraError('Kamera belum siap. Tunggu sebentar lalu coba lagi.');
-    return;
-  }
+    if (video.videoWidth === 0) {
+      setCameraError('Kamera belum siap. Tunggu sebentar lalu coba lagi.');
+      return;
+    }
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  if (ctx) {
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  }
-
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-  stopStream();
-  onImageReady(dataUrl);
-};
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    stopStream();
+    onImageReady(dataUrl);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,8 +80,6 @@ const handleCapture = () => {
     const reader = new FileReader();
     reader.onload = () => {
       onImageReady(reader.result as string);
-      // Poin 1: setMode('uploaded') dihapus - tidak ada gunanya, capturedImage
-      // truthy sudah otomatis menampilkan branch hasil foto di bawah.
     };
     reader.readAsDataURL(file);
   };
@@ -107,7 +93,6 @@ const handleCapture = () => {
     onReset();
   };
 
-  // ----- Sudah ada hasil foto (dari kamera atau upload) -----
   if (capturedImage) {
     return (
       <div className="w-full">
@@ -126,33 +111,22 @@ const handleCapture = () => {
     );
   }
 
-  // ----- Mode kamera aktif -----
   if (mode === 'camera') {
     return (
       <div className="w-full">
         <div className="relative w-full rounded-xl overflow-hidden bg-black">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full max-h-105 object-contain mx-auto"
-            style={{ transform: 'scaleX(-1)' }}
-          />
+          <video ref={videoRef} autoPlay playsInline muted className="w-full max-h-105 object-contain mx-auto" />
           {isInitializing && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
               <div className="text-white text-sm">Menginisialisasi kamera...</div>
             </div>
           )}
-          {/* Garis panduan tengah */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
             <div className="w-px h-2/3 bg-cyan-400/60" />
           </div>
         </div>
 
-        {cameraError && (
-          <p className="mt-2 text-sm text-red-600">{cameraError}</p>
-        )}
+        {cameraError && <p className="mt-2 text-sm text-red-600">{cameraError}</p>}
 
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
           <button
@@ -176,7 +150,6 @@ const handleCapture = () => {
     );
   }
 
-  // ----- Mode pilih (default) -----
   return (
     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
       <button
@@ -195,13 +168,7 @@ const handleCapture = () => {
         <span className="font-medium">Upload Foto</span>
       </button>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
     </div>
   );
 }
