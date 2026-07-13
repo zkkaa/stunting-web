@@ -127,7 +127,7 @@ function AnakDetailPageContent() {
                     <div className="relative" ref={menuRef}>
                       <button
                         onClick={() => setMenuOpen((v) => !v)}
-                        className="p-1.5 rounded-md text-gray-400 hover:text-[#407A81] hover:bg-gray-50 transition-colors"
+                        className="p-1.5 rounded-md text-gray-400 cursor-pointer hover:text-[#407A81] hover:bg-gray-50 transition-colors"
                       >
                         <FiMoreVertical size={18} />
                       </button>
@@ -138,7 +138,7 @@ function AnakDetailPageContent() {
                               setMenuOpen(false);
                               router.push(`/anak/edit/${nik}`);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                            className="w-full text-left cursor-pointer px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             Edit
                           </button>
@@ -147,7 +147,7 @@ function AnakDetailPageContent() {
                               setMenuOpen(false);
                               setShowDelete(true);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                            className="w-full text-left cursor-pointer px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
                           >
                             Hapus
                           </button>

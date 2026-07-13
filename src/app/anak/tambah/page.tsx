@@ -109,7 +109,7 @@ function PilihOrangTuaPageContent() {
                     <span className="text-gray-700">Filter by</span>
                   </button>
                   {showFilters && (
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] overflow-hidden">
+                    <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-9999 overflow-hidden">
                       <div className="p-4">
                         <label className="block text-sm font-medium text-gray-700 mb-3">Urutkan:</label>
                         <div className="space-y-2">
@@ -137,7 +137,7 @@ function PilihOrangTuaPageContent() {
                   )}
                 </div>
 
-                <div className="relative flex-1 min-w-[200px] sm:min-w-[240px]">
+                <div className="relative flex-1 min-w-50 sm:min-w-60">
                   <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input
                     type="text"

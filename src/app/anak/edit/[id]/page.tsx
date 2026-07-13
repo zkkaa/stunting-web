@@ -133,7 +133,7 @@ function AnakEditPageContent() {
           <div className="max-w-3xl mx-auto">
             <button
               onClick={() => guardedPush(`/anak/${nik}`)}
-              className="mb-4 inline-flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-[#407A81] transition-colors"
+              className="mb-4 inline-flex items-center cursor-pointer gap-2 text-sm sm:text-base text-gray-600 hover:text-[#407A81] transition-colors"
             >
               <FiArrowLeft size={18} />
               <span>Kembali ke Detail</span>
@@ -196,7 +196,7 @@ function AnakEditPageContent() {
                         <button
                           type="button"
                           onClick={() => setForm((p) => (p ? { ...p, gender: 'L' } : p))}
-                          className={`py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                          className={`py-2.5 rounded-lg font-medium cursor-pointer text-sm transition-colors ${
                             form.gender === 'L' ? 'bg-[#407A81] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
@@ -205,7 +205,7 @@ function AnakEditPageContent() {
                         <button
                           type="button"
                           onClick={() => setForm((p) => (p ? { ...p, gender: 'P' } : p))}
-                          className={`py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                          className={`py-2.5 rounded-lg font-medium cursor-pointer text-sm transition-colors ${
                             form.gender === 'P' ? 'bg-[#407A81] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
@@ -229,14 +229,14 @@ function AnakEditPageContent() {
                   <button
                     onClick={() => guardedPush(`/anak/${nik}`)}
                     disabled={saving}
-                    className="px-6 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
+                    className="px-6 py-2.5 rounded-lg border-2 cursor-pointer border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-6 py-2.5 rounded-lg bg-[#407A81] text-white hover:bg-[#326269] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 rounded-lg bg-[#407A81] cursor-pointer text-white hover:bg-[#326269] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
                   </button>

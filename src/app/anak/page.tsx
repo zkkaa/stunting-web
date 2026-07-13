@@ -122,20 +122,20 @@ function AnakPageContent() {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => router.push('/anak/tambah')}
-                    className="px-3 sm:px-4 py-2 rounded-md bg-[#407A81] text-white hover:bg-[#326269] font-medium text-sm sm:text-base w-full sm:w-fit"
+                    className="px-3 sm:px-4 cursor-pointer py-2 rounded-md bg-[#407A81] text-white hover:bg-[#326269] font-medium text-sm sm:text-base w-full sm:w-fit"
                   >
                     Tambah Anak
                   </button>
                   <div className="relative" ref={filterRef}>
                     <button
                       onClick={() => setShowFilters(!showFilters)}
-                      className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm sm:text-base w-full sm:w-fit"
+                      className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 cursor-pointer py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm sm:text-base w-full sm:w-fit"
                     >
                       <FiFilter className="text-gray-600" size={16} />
                       <span className="text-gray-700">Filter by</span>
                     </button>
                     {showFilters && (
-                      <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] max-w-[calc(100vw-2rem)] overflow-hidden">
+                      <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-9999 max-w-[calc(100vw-2rem)] overflow-hidden">
                         <div className="p-4">
                           <label className="block text-sm font-medium text-gray-700 mb-3">Urutkan:</label>
                           <div className="space-y-2">
@@ -168,7 +168,7 @@ function AnakPageContent() {
                   </div>
                 </div>
 
-                <div className="relative flex-1 min-w-[200px] sm:min-w-[240px]">
+                <div className="relative flex-1 min-w-50 sm:min-w-60">
                   <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input
                     type="text"
@@ -306,8 +306,7 @@ function ChildCard({
 
   return (
     <div
-      onClick={() => router.push(`/anak/${anak.nik}`)}
-      className="relative bg-white rounded-lg p-4 border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer"
+      className="relative bg-white rounded-lg p-4 border border-gray-200 hover:shadow-lg transition-all duration-200"
       style={{ boxShadow: '0px 1px 3px 1px #00000026, 0px 1px 2px 0px #0000004D' }}
     >
       <div className="flex items-start justify-between">
@@ -329,32 +328,34 @@ function ChildCard({
 
         <div className="relative" data-card-menu>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleMenu();
-            }}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+            onClick={onToggleMenu}
+            className="text-gray-400 cursor-pointer hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
           >
             <FiMoreVertical size={16} />
           </button>
           {isMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-36 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={() => {
+                  onCloseMenu();
+                  router.push(`/anak/${anak.nik}`);
+                }}
+                className="w-full cursor-pointer text-left px-3 py-2 text-sm hover:bg-gray-50"
+              >
+                Lihat Detail
+              </button>
+              <button
+                onClick={() => {
                   onCloseMenu();
                   router.push(`/anak/edit/${anak.nik}`);
                 }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                className="w-full cursor-pointer text-left px-3 py-2 text-sm hover:bg-gray-50"
               >
                 Edit
               </button>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRequestDelete();
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                onClick={onRequestDelete}
+                className="w-full cursor-pointer text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
               >
                 Hapus
               </button>

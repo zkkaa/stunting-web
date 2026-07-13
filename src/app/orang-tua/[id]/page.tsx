@@ -132,7 +132,7 @@ function OrangTuaDetailPageContent() {
                     <div className="relative" ref={menuRef}>
                       <button
                         onClick={() => setMenuOpen((v) => !v)}
-                        className="p-1.5 rounded-md text-gray-400 hover:text-[#407A81] hover:bg-gray-50 transition-colors"
+                        className="p-1.5 rounded-md cursor-pointer text-gray-400 hover:text-[#407A81] hover:bg-gray-50 transition-colors"
                       >
                         <FiMoreVertical size={18} />
                       </button>
@@ -143,7 +143,7 @@ function OrangTuaDetailPageContent() {
                               setMenuOpen(false);
                               router.push(`/orang-tua/edit/${noKk}`);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                            className="w-full cursor-pointer text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             Edit
                           </button>
@@ -152,7 +152,7 @@ function OrangTuaDetailPageContent() {
                               setMenuOpen(false);
                               setShowDeleteKeluarga(true);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                            className="w-full cursor-pointer text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
                           >
                             Hapus
                           </button>
@@ -200,7 +200,7 @@ function OrangTuaDetailPageContent() {
                     <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Data Anak</span>
                     <button
                       onClick={() => setShowAddChild(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#407A81] text-white text-sm font-medium hover:bg-[#326269] transition-colors"
+                      className="inline-flex cursor-pointer items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#407A81] text-white text-sm font-medium hover:bg-[#326269] transition-colors"
                     >
                       <FiPlus size={15} />
                       Tambah Anak
@@ -216,41 +216,6 @@ function OrangTuaDetailPageContent() {
                             onClick={() => router.push(`/anak/${c.nik}`)}
                             className="relative rounded-xl border border-gray-200 p-4 cursor-pointer hover:border-[#407A81] hover:shadow-md transition-all"
                           >
-                            <div className="absolute top-3 right-3" data-child-menu>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setChildMenuOpenId(childMenuOpenId === c.nik ? null : c.nik);
-                                }}
-                                className="text-gray-400 hover:text-gray-600 p-1"
-                              >
-                                <FiMoreVertical size={16} />
-                              </button>
-                              {childMenuOpenId === c.nik && (
-                                <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-20 overflow-hidden">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setChildMenuOpenId(null);
-                                      router.push(`/anak/edit/${c.nik}`);
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setChildMenuOpenId(null);
-                                      setChildDeleteId(c.nik);
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                                  >
-                                    Hapus
-                                  </button>
-                                </div>
-                              )}
-                            </div>
                             <div className="flex items-center gap-3">
                               <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#E5F3F5] flex items-center justify-center text-[#397789] shrink-0">
                                 {c.foto_profil ? (
