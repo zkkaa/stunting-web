@@ -287,7 +287,7 @@ const Statistics: React.FC<StatisticsProps> = ({ className = '' }) => {
             viewport={{ once: true }}
           >
             <motion.h2 
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-[var(--color-primary)] leading-tight text-center lg:text-left"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-(--color-primary) leading-tight text-center lg:text-left"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}

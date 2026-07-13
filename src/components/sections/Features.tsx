@@ -31,7 +31,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description }) =
           {icon}
         </div>
       </motion.div>
-      <div className="flex-grow flex flex-col justify-center">
+      <div className="grow flex flex-col justify-center">
         <motion.h3 
           className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 mb-2 sm:mb-3 leading-tight text-center"
           initial={{ opacity: 0, y: 20 }}

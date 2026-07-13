@@ -196,7 +196,7 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
               variant="primary"
               size="lg"
               onClick={() => router.push(buttonLink)}
-              className="!bg-white !text-black hover:!bg-gray-100 focus:ring-white shadow-md px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base font-semibold tracking-wide rounded-full"
+              className="bg-white! text-black! hover:bg-gray-100! focus:ring-white shadow-md px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base font-semibold tracking-wide rounded-full"
             >
               {buttonText}
             </Button>

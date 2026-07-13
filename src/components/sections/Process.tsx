@@ -15,7 +15,7 @@ interface ProcessCardProps {
 const ProcessCard: React.FC<ProcessCardProps> = ({ icon, title, subtitle, description, borderClass }) => {
   return (
     <motion.div 
-      className={`p-4 sm:p-6 lg:p-8 text-center bg-gradient-to-br from-[rgba(158,202,214,0.7)] via-[rgba(255,255,255,0.7)] to-[rgba(158,202,214,0.7)] opacity-100 shadow-[0px_1px_3px_1px_#00000026,0px_1px_2px_0px_#0000004D] h-72 sm:h-80 lg:h-96 flex flex-col justify-between ${borderClass}`}
+      className={`p-4 sm:p-6 lg:p-8 text-center bg-linear-to-br from-[rgba(158,202,214,0.7)] via-[rgba(255,255,255,0.7)] to-[rgba(158,202,214,0.7)] opacity-100 shadow-[0px_1px_3px_1px_#00000026,0px_1px_2px_0px_#0000004D] h-72 sm:h-80 lg:h-96 flex flex-col justify-between ${borderClass}`}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -33,7 +33,7 @@ const ProcessCard: React.FC<ProcessCardProps> = ({ icon, title, subtitle, descri
           {icon}
         </div>
       </motion.div>
-      <div className="flex-grow flex flex-col justify-center">
+      <div className="grow flex flex-col justify-center">
         <motion.h3 
           className="text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-1 sm:mb-2 text-center"
           initial={{ opacity: 0, y: 20 }}

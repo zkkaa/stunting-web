@@ -44,7 +44,7 @@ const Hero: React.FC<HeroProps> = ({
           >
             {subtitle && (
               <motion.p 
-                className="text-[var(--color-primary)] font-semibold text-xl text-center lg:text-left"
+                className="text-(--color-primary) font-semibold text-xl text-center lg:text-left"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
@@ -81,7 +81,7 @@ const Hero: React.FC<HeroProps> = ({
                 variant="primary"
                 size="lg"
                 onClick={() => router.push(buttonLink)}
-                className="!bg-white !text-black hover:!bg-gray-100 focus:ring-white shadow-md px-6 sm:px-8 md:px-10 py-3 sm:py-4 text-sm sm:text-base font-semibold tracking-wide"
+                className="bg-white! text-black! hover:bg-gray-100! focus:ring-white shadow-md px-6 sm:px-8 md:px-10 py-3 sm:py-4 text-sm sm:text-base font-semibold tracking-wide"
               >
                 {buttonText}
               </Button>
@@ -97,7 +97,7 @@ const Hero: React.FC<HeroProps> = ({
           >
             {/* Main image container with doctor measuring child's height */}
             <motion.div 
-              className="relative w-full max-w-[580px] overflow-hidden bg-white rounded-tl-[50px] sm:rounded-tl-[100px] rounded-tr-[10px] sm:rounded-tr-[20px] rounded-br-[50px] sm:rounded-br-[100px] rounded-bl-[10px] sm:rounded-bl-[20px] opacity-100"
+              className="relative w-full max-w-145 overflow-hidden bg-white rounded-tl-[50px] sm:rounded-tl-[100px] rounded-tr-[10px] sm:rounded-tr-[20px] rounded-br-[50px] sm:rounded-br-[100px] rounded-bl-[10px] sm:rounded-bl-[20px] opacity-100"
               style={{
                 boxShadow: '0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3)'
               }}
@@ -106,7 +106,7 @@ const Hero: React.FC<HeroProps> = ({
               transition={{ duration: 0.8, delay: 0.5 }}
               whileHover={{ scale: 1.02 }}
             >
-              <div className="relative w-full h-[250px] sm:h-[320px] md:h-[380px] lg:h-[420px] bg-gray-50 flex items-center justify-center">
+              <div className="relative w-full h-62.5 sm:h-80 md:h-95 lg:h-105 bg-gray-50 flex items-center justify-center">
                 <Image 
                   src="/image/icon/doctor-meausuring-child-height.jpg"
                   alt="Doctor measuring child height"
