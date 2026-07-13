@@ -7,6 +7,7 @@ import { FiFilter, FiSearch, FiClock, FiArrowRightCircle, FiUser } from 'react-i
 import { fetchRiwayatScanHistory, fetchRiwayatScanSummary } from '@/utils/database';
 import { getStatusColor, getStatusLabel, NutritionStatus } from '@/lib/stuntingCalculator';
 import { RiwayatScanWithAnak } from '@/types';
+import { SummaryCards, SummaryCardData } from '@/components/sections/SummaryCards';
 
 type SortOption = 'latest' | 'az' | 'za' | 'age';
 
@@ -31,18 +32,6 @@ function formatTanggalWaktu(dateString: string): string {
   const tgl = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
   const jam = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
   return `${tgl} · ${jam} WIB`;
-}
-
-function SummaryCardItem({ label, value, colorClass }: { label: string; value: number; colorClass: string }) {
-  return (
-    <div
-      className="bg-white rounded-xl border border-gray-200 p-4 text-center"
-      style={{ boxShadow: '0px 1px 3px 1px #00000026, 0px 1px 2px 0px #0000004D' }}
-    >
-      <p className={`text-2xl sm:text-3xl font-bold ${colorClass}`}>{value}</p>
-      <p className="text-xs sm:text-sm text-gray-500 mt-1">{label}</p>
-    </div>
-  );
 }
 
 function HistoryPageContent() {
@@ -138,12 +127,31 @@ function HistoryPageContent() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <SummaryCardItem label="Stunting Parah" value={summary.stunting_parah || 0} colorClass="text-red-600" />
-              <SummaryCardItem label="Stunting" value={summary.stunting || 0} colorClass="text-amber-600" />
-              <SummaryCardItem label="Normal" value={summary.normal || 0} colorClass="text-green-600" />
-              <SummaryCardItem label="Tinggi" value={summary.tinggi || 0} colorClass="text-blue-600" />
-            </div>
+           // SESUDAH
+            <SummaryCards
+              data={[
+                {
+                  title: 'Stunting Parah',
+                  value: summary.stunting_parah || 0,
+                  bgGradient: 'linear-gradient(135deg, #FEE2E2 0%, #FFFFFF 100%)',
+                },
+                {
+                  title: 'Stunting',
+                  value: summary.stunting || 0,
+                  bgGradient: 'linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%)',
+                },
+                {
+                  title: 'Normal',
+                  value: summary.normal || 0,
+                  bgGradient: 'linear-gradient(135deg, #D1FAE5 0%, #FFFFFF 100%)',
+                },
+                {
+                  title: 'Tinggi',
+                  value: summary.tinggi || 0,
+                  bgGradient: 'linear-gradient(135deg, #DBEAFE 0%, #FFFFFF 100%)',
+                },
+              ] satisfies SummaryCardData[]}
+            />
 
             {loading ? (
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">

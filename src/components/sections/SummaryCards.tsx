@@ -1,10 +1,16 @@
 'use client';
 
 import React from 'react';
-import { SummaryCard as SummaryCardType } from '@/types/history';
+
+export interface SummaryCardData {
+  title: string;
+  value: number;
+  description?: string;
+  bgGradient: string;
+}
 
 interface SummaryCardsProps {
-  data: SummaryCardType[];
+  data: SummaryCardData[];
 }
 
 export const SummaryCards: React.FC<SummaryCardsProps> = ({ data }) => {
@@ -14,9 +20,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ data }) => {
         <div
           key={index}
           className="relative rounded-2xl p-3 sm:p-4 lg:p-6 text-center table-shadow"
-          style={{
-            background: card.bgGradient
-          }}
+          style={{ background: card.bgGradient }}
         >
           <div className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-1 sm:mb-2">
             {card.value}
@@ -24,9 +28,11 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ data }) => {
           <div className="text-xs sm:text-sm lg:text-base xl:text-lg font-semibold text-gray-700 mb-1">
             {card.title}
           </div>
-          <div className="text-xs text-gray-600 hidden sm:block">
-            {card.description}
-          </div>
+          {card.description && (
+            <div className="text-xs text-gray-600 hidden sm:block">
+              {card.description}
+            </div>
+          )}
         </div>
       ))}
     </div>
