@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   signOut: () => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,7 +59,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        // PGRST116 = no rows found, bukan error server
         if (error.code === 'PGRST116') {
           return { success: false, error: 'Email atau kata sandi salah.' };
         }
@@ -70,9 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: 'Email atau kata sandi salah.' };
       }
 
-      // TODO: password saat ini masih dibandingkan sebagai plaintext.
-      // Sebelum production, ganti dengan bcrypt.compare() setelah proses
-      // hashing password diterapkan di alur pendaftaran user.
       if (data.password !== credentials.password) {
         return { success: false, error: 'Email atau kata sandi salah.' };
       }
@@ -93,14 +90,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Update data user di context + localStorage tanpa perlu re-login,
+  // dipakai setelah edit profil berhasil di halaman /profile.
+  const updateUser = useCallback((updates: Partial<AuthUser>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...updates };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
       loading,
       signIn,
       signOut,
+      updateUser,
     }),
-    [user, loading, signIn, signOut]
+    [user, loading, signIn, signOut, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

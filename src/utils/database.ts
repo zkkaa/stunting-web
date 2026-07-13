@@ -452,3 +452,50 @@ export async function fetchRiwayatScanSummary(): Promise<
   });
   return summary;
 }
+
+// ============================================================================
+// USER (akun login)
+// ============================================================================
+
+/** Update data profil dasar (nama, username, no_hp) - TIDAK termasuk email/password. */
+export async function updateUserProfile(
+  userId: string,
+  payload: { name: string; username: string; no_hp: string | null },
+): Promise<void> {
+  const { error } = await supabase
+    .from("user")
+    .update(payload)
+    .eq("id", userId);
+  if (error) {
+    // Kemungkinan besar unique constraint (username sudah dipakai)
+    if (error.code === "23505") {
+      throw new Error("Username sudah digunakan oleh akun lain.");
+    }
+    throw error;
+  }
+}
+
+/** Ganti password - verifikasi password lama dulu sebelum update. */
+export async function updateUserPassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("user")
+    .select("password")
+    .eq("id", userId)
+    .single();
+  if (error) throw error;
+
+  // TODO: sama seperti AuthContext, masih plaintext sampai bcrypt diterapkan.
+  if (data.password !== currentPassword) {
+    throw new Error("Password lama tidak sesuai.");
+  }
+
+  const { error: updateError } = await supabase
+    .from("user")
+    .update({ password: newPassword })
+    .eq("id", userId);
+  if (updateError) throw updateError;
+}
