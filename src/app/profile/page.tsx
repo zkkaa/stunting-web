@@ -5,7 +5,7 @@ import { Layout, ProtectedRoute } from '@/components';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { updateUserProfile, updateUserPassword } from '@/utils/database';
-import { FiUser, FiLock, FiLogOut, FiEdit2, FiX, FiCheck, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiLock, FiLogOut, FiEdit2, FiCheck } from 'react-icons/fi';
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -66,9 +66,6 @@ function EditProfileModal({
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-gray-900">Edit Profil</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <FiX className="w-5 h-5" />
-          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -112,14 +109,14 @@ function EditProfileModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-md hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              className="flex-1 cursor-pointer bg-gray-100 text-gray-700 py-2.5 rounded-md hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={!isValid || saving}
-              className="flex-1 bg-[#407A81] text-white py-2.5 rounded-md hover:bg-[#326269] transition-colors font-medium disabled:opacity-50"
+              className="flex-1 cursor-pointer bg-[#407A81] text-white py-2.5 rounded-md hover:bg-[#326269] transition-colors font-medium disabled:opacity-50"
             >
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
@@ -172,7 +169,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
           <p className="text-gray-600 mb-6 text-sm">Gunakan password baru untuk login berikutnya.</p>
           <button
             onClick={onClose}
-            className="w-full bg-[#407A81] text-white py-3 rounded-xl hover:bg-[#326269] transition-colors font-semibold"
+            className="w-full cursor-pointer bg-[#407A81] text-white py-3 rounded-xl hover:bg-[#326269] transition-colors font-semibold"
           >
             Tutup
           </button>
@@ -187,9 +184,6 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-gray-900">Ubah Password</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <FiX className="w-5 h-5" />
-          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -234,11 +228,10 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
               type="checkbox"
               checked={showPasswords}
               onChange={() => setShowPasswords((v) => !v)}
-              className="w-4 h-4"
+              className="w-4 h-4 cursor-pointer"
               style={{ accentColor: '#407A81' }}
             />
             <span className="text-xs text-gray-600 inline-flex items-center gap-1">
-              {showPasswords ? <FiEyeOff size={12} /> : <FiEye size={12} />}
               Tampilkan password
             </span>
           </label>
@@ -252,14 +245,14 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-md hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              className="flex-1 cursor-pointer bg-gray-100 text-gray-700 py-2.5 rounded-md hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={!isValid || saving}
-              className="flex-1 bg-[#407A81] text-white py-2.5 rounded-md hover:bg-[#326269] transition-colors font-medium disabled:opacity-50"
+              className="flex-1 cursor-pointer bg-[#407A81] text-white py-2.5 rounded-md hover:bg-[#326269] transition-colors font-medium disabled:opacity-50"
             >
               {saving ? 'Menyimpan...' : 'Ubah Password'}
             </button>
@@ -326,7 +319,7 @@ function ProfilePageContent() {
               <div className="space-y-3">
                 <button
                   onClick={() => setShowEditModal(true)}
-                  className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+                  className="w-full cursor-pointer flex items-center justify-between px-5 py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   <span className="flex items-center gap-3">
                     <span className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
@@ -339,7 +332,7 @@ function ProfilePageContent() {
 
                 <button
                   onClick={() => setShowPasswordModal(true)}
-                  className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+                  className="w-full cursor-pointer flex items-center justify-between px-5 py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   <span className="flex items-center gap-3">
                     <span className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
@@ -352,7 +345,7 @@ function ProfilePageContent() {
 
                 <button
                   onClick={() => setShowLogoutModal(true)}
-                  className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-gray-200 hover:bg-red-50 transition-colors"
+                  className="w-full cursor-pointer flex items-center justify-between px-5 py-4 rounded-xl border border-gray-200 hover:bg-red-50 transition-colors"
                 >
                   <span className="flex items-center gap-3">
                     <span className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
@@ -394,13 +387,13 @@ function ProfilePageContent() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors font-semibold"
+                className="flex-1 cursor-pointer bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors font-semibold"
               >
                 Batal
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors font-semibold"
+                className="flex-1 cursor-pointer bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors font-semibold"
               >
                 Keluar
               </button>

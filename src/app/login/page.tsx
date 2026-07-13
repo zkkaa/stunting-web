@@ -62,6 +62,12 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen relative overflow-x-hidden">
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-60 z-0"
+        style={{
+          background: `radial-gradient(ellipse at center top, rgba(158, 202, 214, 0.6) 0%, rgba(158, 202, 214, 0.3) 30%, rgba(158, 202, 214, 0.1) 50%, transparent 70%)`,
+        }}
+      />
       <div className="relative z-20 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md -mt-18 md:-mt-18">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8" style={{ boxShadow: '0px 1px 3px 1px #00000026, 0px 1px 2px 0px #0000004D' }}>
@@ -76,25 +82,29 @@ function LoginForm() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 <input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@email.com"
                   required
+                  autoComplete="email"
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Kata Sandi</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Kata Sandi</label>
                 <div className="relative">
                   <input
+                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    autoComplete="current-password"
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none pr-12"
                   />
                   <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-0 px-3 text-[#407A81]">
@@ -126,5 +136,3 @@ export default function LoginPage() {
     </Layout>
   );
 }
-
-

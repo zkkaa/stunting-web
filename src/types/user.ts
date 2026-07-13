@@ -4,8 +4,7 @@ export interface User {
   username: string;
   email: string;
   no_hp: string | null;
-  password: string; // hash, tidak pernah dikirim ke client dalam bentuk plain
-  profile_image: string | null;
+  password: string;
   created_at: string;
   updated_at: string;
 }
@@ -22,5 +21,4 @@ export interface AuthUser {
   username: string;
   email: string;
   no_hp: string | null;
-  profile_image: string | null;
 }
