@@ -14,6 +14,7 @@ export { HistoryTable } from './sections/HistoryTable';
 // UI Components
 export { default as Button } from './ui/Button';
 export { default as ProfileButton } from './ui/ProfileButton';
+export { default as DeleteConfirmModal } from './ui/DeleteConfirmModal';
 
 // Protected Route
 export { ProtectedRoute } from './ProtectedRoute';

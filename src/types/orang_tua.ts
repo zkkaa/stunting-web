@@ -45,6 +45,7 @@ export interface NewOrangTuaPayload {
 // Bentuk gabungan yang sering dipakai di halaman detail/list (keluarga + ayah + ibu + alamat + jumlah anak)
 export interface KeluargaDetail {
   no_kk: string;
+  created_at: string;
   ayah: OrangTua | null;
   ibu: OrangTua | null;
   alamat: Alamat | null;

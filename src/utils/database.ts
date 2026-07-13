@@ -20,47 +20,51 @@ import { deleteProfileImage, uploadProfileImage } from "./storage";
 
 /** Daftar keluarga untuk halaman list "Orang Tua" - 1 row per KK. */
 export async function fetchKeluargaList(): Promise<KeluargaDetail[]> {
-  const { data: orangTuaData, error: otError } = await supabase
-    .from("orang_tua")
-    .select("*");
-  if (otError) throw otError;
-  if (!orangTuaData || orangTuaData.length === 0) return [];
+  const { data: keluargaData, error: keluargaError } = await supabase
+    .from('keluarga')
+    .select('no_kk, created_at')
+    .order('created_at', { ascending: false });
+  if (keluargaError) throw keluargaError;
+  if (!keluargaData || keluargaData.length === 0) return [];
 
-  const uniqueNoKk = [...new Set(orangTuaData.map((p) => p.no_kk))];
+  const noKkList = keluargaData.map((k) => k.no_kk);
+
+  const { data: orangTuaData, error: otError } = await supabase
+    .from('orang_tua')
+    .select('*')
+    .in('no_kk', noKkList);
+  if (otError) throw otError;
 
   const { data: anakData, error: anakError } = await supabase
-    .from("anak")
-    .select("no_kk")
-    .eq("aktif", true)
-    .in("no_kk", uniqueNoKk);
+    .from('anak')
+    .select('no_kk')
+    .eq('aktif', true)
+    .in('no_kk', noKkList);
   if (anakError) throw anakError;
 
   const { data: alamatData, error: alamatError } = await supabase
-    .from("alamat")
-    .select("*")
-    .in("no_kk", uniqueNoKk);
+    .from('alamat')
+    .select('*')
+    .in('no_kk', noKkList);
   if (alamatError) throw alamatError;
 
   const jumlahAnakMap = new Map<string, number>();
-  anakData?.forEach((a) => {
-    jumlahAnakMap.set(a.no_kk, (jumlahAnakMap.get(a.no_kk) || 0) + 1);
-  });
+  anakData?.forEach((a) => jumlahAnakMap.set(a.no_kk, (jumlahAnakMap.get(a.no_kk) || 0) + 1));
 
   const alamatMap = new Map<string, Alamat>();
   alamatData?.forEach((a) => alamatMap.set(a.no_kk, a));
 
-  const result: KeluargaDetail[] = uniqueNoKk.map((no_kk) => {
-    const parents = orangTuaData.filter((p) => p.no_kk === no_kk);
+  return keluargaData.map((k) => {
+    const parents = orangTuaData?.filter((p) => p.no_kk === k.no_kk) || [];
     return {
-      no_kk,
-      ayah: parents.find((p) => p.role === "ayah") || null,
-      ibu: parents.find((p) => p.role === "ibu") || null,
-      alamat: alamatMap.get(no_kk) || null,
-      jumlah_anak: jumlahAnakMap.get(no_kk) || 0,
+      no_kk: k.no_kk,
+      created_at: k.created_at,
+      ayah: parents.find((p) => p.role === 'ayah') || null,
+      ibu: parents.find((p) => p.role === 'ibu') || null,
+      alamat: alamatMap.get(k.no_kk) || null,
+      jumlah_anak: jumlahAnakMap.get(k.no_kk) || 0,
     };
   });
-
-  return result;
 }
 
 /** Detail 1 keluarga (untuk halaman detail/edit orang tua), termasuk daftar anak. */

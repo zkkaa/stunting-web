@@ -2,271 +2,308 @@
 
 import React, { useState, useEffect } from 'react';
 import { Layout, ProtectedRoute } from '@/components';
-import Link from 'next/link';
-import { FiArrowLeft } from 'react-icons/fi';
-import { useRouter } from 'next/navigation';
-import { fetchParentDetailByNoKK, updateParentData } from '@/utils/database-clean';
-import { useParams } from 'next/navigation';
+import { FiArrowLeft, FiUser, FiPlus } from 'react-icons/fi';
+import { useRouter, useParams } from 'next/navigation';
+import { fetchKeluargaDetail, updateOrangTuaData } from '@/utils/database';
+import { OrangTua, Alamat } from '@/types';
+import { useUnsavedChanges, useNavigationGuard } from '@/contexts/NavigationGuardContext';
+
+interface EditForm {
+  ayah: { nama: string; tempat_lahir: string; tanggal_lahir: string; no_hp: string; foto_profil: string | null };
+  ibu: { nama: string; tempat_lahir: string; tanggal_lahir: string; no_hp: string; foto_profil: string | null };
+  alamat: { provinsi: string; kota: string; kecamatan: string; desa: string; jalan: string; kode_pos: string };
+  jumlahAnak: number;
+}
+
+function toEditForm(ayah: OrangTua | null, ibu: OrangTua | null, alamat: Alamat | null, jumlahAnak: number): EditForm {
+  return {
+    ayah: {
+      nama: ayah?.nama || '',
+      tempat_lahir: ayah?.tempat_lahir || '',
+      tanggal_lahir: ayah?.tanggal_lahir || '',
+      no_hp: ayah?.no_hp || '',
+      foto_profil: ayah?.foto_profil || null,
+    },
+    ibu: {
+      nama: ibu?.nama || '',
+      tempat_lahir: ibu?.tempat_lahir || '',
+      tanggal_lahir: ibu?.tanggal_lahir || '',
+      no_hp: ibu?.no_hp || '',
+      foto_profil: ibu?.foto_profil || null,
+    },
+    alamat: {
+      provinsi: alamat?.provinsi || '',
+      kota: alamat?.kota || '',
+      kecamatan: alamat?.kecamatan || '',
+      desa: alamat?.desa || '',
+      jalan: alamat?.jalan || '',
+      kode_pos: alamat?.kode_pos || '',
+    },
+    jumlahAnak,
+  };
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = 'text',
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
+      />
+    </div>
+  );
+}
 
 function OrangTuaEditPageContent() {
   const router = useRouter();
   const params = useParams();
-  const parentId = params?.id as string;
-  
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [initialData, setInitialData] = useState<any>(null);
+  const noKk = params?.id as string;
+  const { guardedPush } = useNavigationGuard();
+
+  const [form, setForm] = useState<EditForm | null>(null);
+  const [initialForm, setInitialForm] = useState<EditForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [fatherPreview, setFatherPreview] = useState<string | null>(null);
+  const [motherPreview, setMotherPreview] = useState<string | null>(null);
   const [fatherImageFile, setFatherImageFile] = useState<File | null>(null);
   const [motherImageFile, setMotherImageFile] = useState<File | null>(null);
 
-  // Load parent data from database
+  const isDirty =
+    form !== null &&
+    initialForm !== null &&
+    (JSON.stringify(form) !== JSON.stringify(initialForm) || fatherImageFile !== null || motherImageFile !== null);
+
+  useUnsavedChanges(isDirty && !saving);
+
   useEffect(() => {
-    const loadParentData = async () => {
-      if (!parentId) return;
-      
+    const load = async () => {
+      if (!noKk) return;
       try {
         setLoading(true);
         setError('');
-        
-        // parentId should be no_kk (family number)
-        const parentDetail = await fetchParentDetailByNoKK(parentId);
-        
-        if (!parentDetail) {
-          setError('Data orang tua tidak ditemukan');
-          return;
-        }
-        
-        // Transform database data to component format
-        const transformedData = {
-          father: {
-            name: parentDetail.father?.nama || 'Tidak ada',
-            nik: parentDetail.father?.nik || '',
-            phone: parentDetail.father?.no_hp || '',
-            birthPlace: parentDetail.father?.tempat_lahir || '',
-            birthDate: parentDetail.father?.tanggal_lahir || '',
-            image: parentDetail.father?.image_orangtua || '/image/icon/pengukuran-anak.jpg',
-          },
-          mother: {
-            name: parentDetail.mother?.nama || 'Tidak ada',
-            nik: parentDetail.mother?.nik || '',
-            phone: parentDetail.mother?.no_hp || '',
-            birthPlace: parentDetail.mother?.tempat_lahir || '',
-            birthDate: parentDetail.mother?.tanggal_lahir || '',
-            image: parentDetail.mother?.image_orangtua || '/image/icon/pengukuran-anak.jpg',
-          },
-          family: {
-            kk: parentDetail.family.no_kk,
-            childrenCount: parentDetail.family.childrenCount, // Read-only, auto calculated
-          },
-          address: {
-            provinsi: parentDetail.address?.provinsi || '',
-            kota: parentDetail.address?.kota || '',
-            kecamatan: parentDetail.address?.kecamatan || '',
-            desa: parentDetail.address?.desa || '',
-            kodePos: parentDetail.address?.kode_pos || '',
-            detail: parentDetail.address?.jalan || '',
-          },
-        };
-        
-        setData(transformedData);
-        setInitialData(transformedData);
-        
+        const detail = await fetchKeluargaDetail(noKk);
+        const editForm = toEditForm(detail.ayah, detail.ibu, detail.alamat, detail.anak.length);
+        setForm(editForm);
+        setInitialForm(editForm);
       } catch (err) {
-        console.error('Error loading parent data:', err);
+        console.error('Error loading keluarga detail:', err);
         setError('Gagal memuat data orang tua');
       } finally {
         setLoading(false);
       }
     };
+    load();
+  }, [noKk]);
 
-    loadParentData();
-  }, [parentId]);
-
-  const update = (path: string, value: string | number) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setData((prev: any) => {
-      const next = { ...prev };
-      const keys = path.split('.');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let cur: Record<string, any> = next;
-      for (let i = 0; i < keys.length - 1; i++) {
-        cur[keys[i]] = { ...cur[keys[i]] };
-        cur = cur[keys[i]];
-      }
-      cur[keys[keys.length - 1]] = value;
-      return next;
-    });
+  const updateField = (section: 'ayah' | 'ibu' | 'alamat', field: string, value: string) => {
+    setForm((prev) => (prev ? { ...prev, [section]: { ...prev[section], [field]: value } } : prev));
   };
 
   const handleSave = async () => {
+    if (!form) return;
     try {
       setSaving(true);
       setError('');
-      
-      console.log('💾 Saving parent data...');
-      
-      // Get the new No KK (might be different from original)
-      const newNoKK = data.family.kk;
-      
-      // Call the update function with image files
-      await updateParentData(
-        parentId, // original no_kk for WHERE clause
-        data,
-        fatherImageFile || undefined,
-        motherImageFile || undefined
-      );
-      
-      console.log('✅ Parent data saved successfully');
-      
-      // Redirect to detail page with the NEW No KK (not the original parentId)
-      router.push(`/orang-tua/${newNoKK}`);
+      await updateOrangTuaData(noKk, {
+        ayah: {
+          nama: form.ayah.nama,
+          tempat_lahir: form.ayah.tempat_lahir,
+          tanggal_lahir: form.ayah.tanggal_lahir,
+          no_hp: form.ayah.no_hp,
+        },
+        ibu: {
+          nama: form.ibu.nama,
+          tempat_lahir: form.ibu.tempat_lahir,
+          tanggal_lahir: form.ibu.tanggal_lahir,
+          no_hp: form.ibu.no_hp,
+        },
+        alamat: form.alamat,
+      });
+      router.push(`/orang-tua/${noKk}`);
     } catch (err) {
-      console.error('❌ Error saving parent data:', err);
+      console.error('Error saving parent data:', err);
       setError('Gagal menyimpan data orang tua');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    // If No KK has been changed, go to the original No KK detail page
-    // If not changed, go to current parentId detail page
-    const originalNoKK = initialData?.family?.kk || parentId;
-    router.push(`/orang-tua/${originalNoKK}`);
-  };
-
   return (
     <Layout>
-      <div className="min-h-screen relative overflow-x-hidden">
-        <div 
+      <div className="min-h-screen relative overflow-x-hidden bg-gray-50/50">
+        <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-60 z-10"
           style={{
-            background: `radial-gradient(ellipse at center top, rgba(158, 202, 214, 0.6) 0%, rgba(158, 202, 214, 0.3) 30%, rgba(158, 202, 214, 0.1) 50%, transparent 70%)`
+            background: `radial-gradient(ellipse at center top, rgba(158, 202, 214, 0.6) 0%, rgba(158, 202, 214, 0.3) 30%, rgba(158, 202, 214, 0.1) 50%, transparent 70%)`,
           }}
         />
 
-        <div className="relative z-20 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-5xl mx-auto">
-            <Link href={`/orang-tua/${parentId}`} className="mb-4 inline-flex items-center gap-2 text-lg md:text-2xl text-gray-700 hover:underline">
-              <FiArrowLeft size={20} />
+        <div className="relative z-20 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto">
+            <button
+              onClick={() => guardedPush(`/orang-tua/${noKk}`)}
+              className="mb-4 cursor-pointer inline-flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-[#407A81] transition-colors"
+            >
+              <FiArrowLeft size={18} />
               <span>Kembali ke Detail</span>
-            </Link>
-            <div className="text-center text-2xl sm:text-3xl md:text-5xl font-semibold text-gray-700 mb-4">Edit Profile Orang Tua</div>
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Edit Profile Orang Tua</h1>
 
             {loading ? (
               <div className="text-center py-20">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#407A81]"></div>
-                <p className="mt-4 text-gray-600">Memuat data...</p>
+                <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-[#407A81]"></div>
+                <p className="mt-4 text-gray-500 text-sm">Memuat data...</p>
               </div>
-            ) : error ? (
+            ) : !form ? (
               <div className="text-center py-20">
-                <p className="text-red-500 mb-4">{error}</p>
-                <button 
-                  onClick={() => window.location.reload()} 
-                  className="px-4 py-2 bg-[#407A81] text-white rounded-md hover:bg-[#326269]"
-                >
-                  Coba Lagi
-                </button>
-              </div>
-            ) : !data ? (
-              <div className="text-center py-20">
-                <p className="text-gray-500">Data tidak ditemukan</p>
+                <p className="text-red-500 text-sm">{error || 'Data tidak ditemukan'}</p>
               </div>
             ) : (
-              <div 
-                className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6"
-                style={{ boxShadow: '0px 1px 3px 1px #00000026, 0px 1px 2px 0px #0000004D' }}
-              >
-                <div className="p-4 sm:p-6">
-                  {/* Father */}
-                  <SectionTitle title="Identitas Ayah" />
-                  <IdentityRow
-                    editing={true}
-                    image={data.father.image}
-                    name={data.father.name}
-                    nik={data.father.nik}
-                    phone={data.father.phone}
-                    birthPlace={data.father.birthPlace}
-                    birthDate={data.father.birthDate}
-                    subject="Ayah"
-                    onChange={(field, val) => update(`father.${field}`, val)}
-                    onImageFile={(file) => setFatherImageFile(file)}
-                  />
-
-                  {/* Mother */}
-                  <div className="mt-6 sm:mt-8">
-                    <SectionTitle title="Identitas Ibu" />
-                    <IdentityRow
-                      editing={true}
-                      image={data.mother.image}
-                      name={data.mother.name}
-                      nik={data.mother.nik}
-                      phone={data.mother.phone}
-                      birthPlace={data.mother.birthPlace}
-                      birthDate={data.mother.birthDate}
-                      subject="Ibu"
-                      onChange={(field, val) => update(`mother.${field}`, val)}
-                      onImageFile={(file) => setMotherImageFile(file)}
-                    />
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                {error && (
+                  <div className="mx-5 sm:mx-7 mt-5 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {error}
                   </div>
+                )}
 
-                  {/* Family - Read-only section */}
-                  <div className="mt-6 sm:mt-8">
-                    <SectionTitle title="Identitas Keluarga" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                      <InputField 
-                        label="No KK" 
-                        value={data.family.kk} 
-                        onChange={(v) => update('family.kk', v)} 
+                {/* Identitas Ayah */}
+                <div className="px-5 sm:px-7 py-6 border-b border-gray-100">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Identitas Ayah</div>
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#E5F3F5] flex items-center justify-center text-[#397789] shrink-0">
+                      {fatherPreview || form.ayah.foto_profil ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={fatherPreview || form.ayah.foto_profil || ''} alt="Ayah" className="w-full h-full object-cover" />
+                      ) : (
+                        <FiUser size={28} />
+                      )}
+                    </div>
+                    <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer text-sm font-medium">
+                      <FiPlus size={14} />
+                      Ganti Foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setFatherImageFile(file);
+                            setFatherPreview(URL.createObjectURL(file));
+                          }
+                        }}
                       />
-                      <div className="mb-3">
-                        <div className="text-[11px] text-gray-500 mb-1">Jumlah Anak</div>
-                        <div className="w-full px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-gray-600 text-sm">
-                          {data.family.childrenCount} Anak (Otomatis)
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">Jumlah anak dihitung otomatis berdasarkan data anak yang terdaftar</div>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="Nama Lengkap" value={form.ayah.nama} onChange={(v) => updateField('ayah', 'nama', v)} />
+                    <Field label="Tempat Lahir" value={form.ayah.tempat_lahir} onChange={(v) => updateField('ayah', 'tempat_lahir', v)} />
+                    <Field label="Tanggal Lahir" type="date" value={form.ayah.tanggal_lahir} onChange={(v) => updateField('ayah', 'tanggal_lahir', v)} />
+                    <Field label="Nomor Telepon" value={form.ayah.no_hp} onChange={(v) => updateField('ayah', 'no_hp', v)} />
+                  </div>
+                </div>
+
+                {/* Identitas Ibu */}
+                <div className="px-5 sm:px-7 py-6 border-b border-gray-100">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Identitas Ibu</div>
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#E5F3F5] flex items-center justify-center text-[#397789] shrink-0">
+                      {motherPreview || form.ibu.foto_profil ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={motherPreview || form.ibu.foto_profil || ''} alt="Ibu" className="w-full h-full object-cover" />
+                      ) : (
+                        <FiUser size={28} />
+                      )}
+                    </div>
+                    <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer text-sm font-medium">
+                      <FiPlus size={14} />
+                      Ganti Foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setMotherImageFile(file);
+                            setMotherPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="Nama Lengkap" value={form.ibu.nama} onChange={(v) => updateField('ibu', 'nama', v)} />
+                    <Field label="Tempat Lahir" value={form.ibu.tempat_lahir} onChange={(v) => updateField('ibu', 'tempat_lahir', v)} />
+                    <Field label="Tanggal Lahir" type="date" value={form.ibu.tanggal_lahir} onChange={(v) => updateField('ibu', 'tanggal_lahir', v)} />
+                    <Field label="Nomor Telepon" value={form.ibu.no_hp} onChange={(v) => updateField('ibu', 'no_hp', v)} />
+                  </div>
+                </div>
+
+                {/* Identitas Keluarga (read-only) */}
+                <div className="px-5 sm:px-7 py-6 border-b border-gray-100">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Identitas Keluarga</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1.5">No KK</label>
+                      <div className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 text-sm">
+                        {noKk}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">No KK tidak dapat diubah setelah dibuat.</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1.5">Jumlah Anak</label>
+                      <div className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 text-sm">
+                        {form.jumlahAnak} Anak (Otomatis)
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Address */}
-                  <div className="mt-6 sm:mt-8">
-                    <SectionTitle title="Alamat Rumah" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                      <div>
-                        <InputField label="Provinsi" value={data.address.provinsi} onChange={(v) => update('address.provinsi', v)} />
-                        <InputField label="Kecamatan" value={data.address.kecamatan} onChange={(v) => update('address.kecamatan', v)} />
-                        <InputField label="Detail Jalan" value={data.address.detail} onChange={(v) => update('address.detail', v)} />
-                      </div>
-                      <div>
-                        <InputField label="Kota/Kabupaten" value={data.address.kota} onChange={(v) => update('address.kota', v)} />
-                        <InputField label="Desa" value={data.address.desa} onChange={(v) => update('address.desa', v)} />
-                        <InputField label="Kode Pos" value={data.address.kodePos} onChange={(v) => update('address.kodePos', v)} />
-                      </div>
-                    </div>
+                {/* Alamat */}
+                <div className="px-5 sm:px-7 py-6">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Alamat Rumah</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="Provinsi" value={form.alamat.provinsi} onChange={(v) => updateField('alamat', 'provinsi', v)} />
+                    <Field label="Kota/Kabupaten" value={form.alamat.kota} onChange={(v) => updateField('alamat', 'kota', v)} />
+                    <Field label="Kecamatan" value={form.alamat.kecamatan} onChange={(v) => updateField('alamat', 'kecamatan', v)} />
+                    <Field label="Desa" value={form.alamat.desa} onChange={(v) => updateField('alamat', 'desa', v)} />
+                    <Field label="Detail Jalan" value={form.alamat.jalan} onChange={(v) => updateField('alamat', 'jalan', v)} />
+                    <Field label="Kode Pos" value={form.alamat.kode_pos} onChange={(v) => updateField('alamat', 'kode_pos', v)} />
                   </div>
+                </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-8 flex items-center justify-end gap-3">
-                    <button 
-                      onClick={handleCancel} 
-                      className="px-6 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      disabled={saving}
-                    >
-                      Batal
-                    </button>
-                    <button 
-                      onClick={handleSave} 
-                      className="px-6 py-2 rounded-md bg-[#407A81] text-white hover:bg-[#326269] disabled:opacity-50"
-                      disabled={saving}
-                    >
-                      {saving ? 'Menyimpan...' : 'Simpan'}
-                    </button>
-                  </div>
+                {/* Actions */}
+                <div className="px-5 sm:px-7 py-5 bg-gray-50/70 border-t border-gray-100 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => guardedPush(`/orang-tua/${noKk}`)}
+                    disabled={saving}
+                    className="px-6 cursor-pointer py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-6 cursor-pointer py-2.5 rounded-lg bg-[#407A81] text-white hover:bg-[#326269] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                  </button>
                 </div>
               </div>
             )}
@@ -274,108 +311,6 @@ function OrangTuaEditPageContent() {
         </div>
       </div>
     </Layout>
-  );
-}
-
-function SectionTitle({ title }: { title: string }) {
-  return <div className="text-base sm:text-lg font-semibold text-gray-700 mb-3">{title}</div>;
-}
-
-function InputField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="mb-3">
-      <div className="text-[11px] text-gray-500 mb-1">{label}</div>
-      <input 
-        value={value} 
-        onChange={(e) => onChange(e.target.value)} 
-        className="w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#9ECAD6] focus:border-transparent text-sm" 
-      />
-    </div>
-  );
-}
-
-function IdentityRow({ editing = false, image, name, nik, phone, birthPlace, birthDate, subject, onChange, onImageFile }: { editing?: boolean; image: string; name: string; nik: string; phone: string; birthPlace: string; birthDate: string; subject?: 'Ayah' | 'Ibu'; onChange?: (field: string, value: string) => void; onImageFile?: (file: File) => void; }) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-start">
-      {/* Left: Photo + Upload */}
-      <div>
-        <div className="flex items-center gap-4">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 relative rounded-2xl overflow-hidden bg-[#E5F3F5] flex items-center justify-center text-[#397789]">
-            {image && image !== '/image/icon/pengukuran-anak.jpg' && !image.startsWith('blob:') ? (
-              <img 
-                src={image} 
-                alt={name} 
-                className="absolute inset-0 w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.removeAttribute('style');
-                }}
-              />
-            ) : image && image.startsWith('blob:') ? (
-              <img src={image} alt={name} className="absolute inset-0 w-full h-full object-cover" />
-            ) : null}
-            <svg 
-              width="36" 
-              height="36" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-              className={image && image !== '/image/icon/pengukuran-anak.jpg' ? 'hidden' : ''}
-            >
-              <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-4.418 0-8 3.582-8 8h16c0-4.418-3.582-8-8-8Z" fill="#397789"/>
-            </svg>
-          </div>
-          <div className="text-xs text-gray-500 leading-4">
-            <div className="font-semibold">Upload Foto {subject}</div>
-            <div>Format PNG, JPG maksimal 2MB</div>
-          </div>
-        </div>
-
-        {/* Upload Button */}
-        <div className="mt-3">
-          <label className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer text-sm">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const url = URL.createObjectURL(file);
-                  if (onChange) {
-                    onChange('image', url);
-                  }
-                  if (onImageFile) {
-                    onImageFile(file);
-                  }
-                }
-              }}
-            />
-            <span>Pilih Foto</span>
-          </label>
-        </div>
-
-        <div className="mt-4">
-          <InputField label={`Nomor Telepon ${subject}`} value={phone} onChange={(v) => onChange && onChange('phone', v)} />
-          <InputField label="Tempat Lahir" value={birthPlace} onChange={(v) => onChange && onChange('birthPlace', v)} />
-        </div>
-      </div>
-
-      {/* Right: Form Fields */}
-      <div>
-        <InputField label="Nama Lengkap" value={name} onChange={(v) => onChange && onChange('name', v)} />
-        <InputField label="NIK" value={nik} onChange={(v) => onChange && onChange('nik', v)} />
-        <div className="mb-3">
-          <div className="text-[11px] text-gray-500 mb-1">Tanggal Lahir</div>
-          <input 
-            type="date"
-            value={birthDate} 
-            onChange={(e) => onChange && onChange('birthDate', e.target.value)} 
-            className="w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#9ECAD6] focus:border-transparent text-sm" 
-          />
-        </div>
-      </div>
-    </div>
   );
 }
 
