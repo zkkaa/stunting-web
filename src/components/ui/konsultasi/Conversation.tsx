@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useAuth } from "@/contexts/AuthContext";
-import Image from "next/image";
-import { BsRobot, BsPersonCircle } from "react-icons/bs";
-import Markdown from "react-markdown";
+import { useAuth } from '@/contexts/AuthContext';
+import { BsRobot } from 'react-icons/bs';
+import Markdown from 'react-markdown';
+
 interface IMessage {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
 }
 
@@ -15,45 +15,34 @@ interface IProps {
 
 export default function Conversation({ chats }: IProps) {
   const { user } = useAuth();
+  const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || 'U';
 
   return (
-    <div className="w-full flex flex-col mx-auto p-4 mb-10">
-      {chats.map((chat: IMessage, index: number) => (
+    <div className="w-full flex flex-col mx-auto p-4 mb-10 gap-4">
+      {chats.map((chat, index) => (
         <div
           key={index}
-          className={`w-full flex ${
-            chat.role === "user" ? "justify-end" : "justify-start"
-          } mb-4 flex items-center space-x-2`}
+          className={`w-full flex items-end gap-2 ${
+            chat.role === 'user' ? 'justify-end' : 'justify-start'
+          }`}
         >
-          {chat.role === "assistant" && (
-            <div className="w-10 h-10 rounded-full bg-[#407A81] flex items-center justify-center text-white">
-              <BsRobot size={24} />
+          {chat.role === 'assistant' && (
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#407A81] flex items-center justify-center text-white shrink-0">
+              <BsRobot size={20} />
             </div>
           )}
           <div
-            className={`p-3 rounded-lg max-w-[70%] ${
-              chat.role === "user"
-                ? "bg-[#407A81] text-white"
-                : "bg-white text-black"
+            className={`p-3 rounded-2xl max-w-[80%] sm:max-w-[70%] text-sm sm:text-base ${
+              chat.role === 'user'
+                ? 'bg-[#407A81] text-white rounded-br-sm'
+                : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm shadow-sm'
             }`}
           >
             <Markdown>{chat.content}</Markdown>
           </div>
-          {chat.role !== "assistant" && (
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center ">
-              {user?.profile_image ? (
-                <Image
-                  src={user.profile_image}
-                  alt={user.name || "User"}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  width={24}
-                  height={24}
-                  quality={100}
-                />
-              ) : (
-                  <BsPersonCircle size={24} className="w-10 h-10 p-1 rounded-full bg-[#407A81] flex items-center justify-center text-white" />
-              )}
+          {chat.role === 'user' && (
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#E5F3F5] flex items-center justify-center text-[#397789] font-semibold text-sm shrink-0">
+              {initial}
             </div>
           )}
         </div>
