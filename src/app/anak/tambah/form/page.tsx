@@ -1,491 +1,218 @@
 'use client';
 
-import React, { useState, Suspense, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Layout, ProtectedRoute } from '@/components';
-import { FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiPlus } from 'react-icons/fi';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { insertChildData, uploadChildImage, NewChildData } from '@/utils/database-clean';
+import { fetchKeluargaDetail, insertAnak } from '@/utils/database';
+import { NewAnakPayload, OrangTua } from '@/types';
+import { useUnsavedChanges, useNavigationGuard } from '@/contexts/NavigationGuardContext';
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder = '',
+  type = 'text',
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
+      />
+    </div>
+  );
+}
 
 function TambahAnakFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const no_kk = searchParams?.get('no_kk');
-  const fatherName = searchParams?.get('fatherName');
-  const motherName = searchParams?.get('motherName');
+  const noKk = searchParams?.get('no_kk') || '';
+  const { guardedPush } = useNavigationGuard();
 
-  const [formData, setFormData] = useState({
-    name: '',
+  const [ayah, setAyah] = useState<OrangTua | null>(null);
+  const [ibu, setIbu] = useState<OrangTua | null>(null);
+  const [loadingParent, setLoadingParent] = useState(true);
+
+  const [form, setForm] = useState({
     nik: '',
-    birthPlace: '',
-    birthDate: '',
-    currentAge: '',
-    ageUnit: 'Bulan',
-    gender: 'L', // L = Laki-laki, P = Perempuan
-    birthWeight: '',
-    birthHeight: '',
-    birthHeadCircumference: ''
+    nama: '',
+    tempat_lahir: '',
+    tanggal_lahir: '',
+    gender: 'L' as 'L' | 'P',
+    bb_lahir: '',
+    tb_lahir: '',
+    lk_lahir: '',
   });
-
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isManualAge, setIsManualAge] = useState(false); // Track if user wants manual age input
 
-  // Function to calculate age from birth date
-  const calculateAgeFromBirthDate = (birthDate: string) => {
-    if (!birthDate) return { months: 0, years: 0 };
-    
-    const birth = new Date(birthDate);
-    const today = new Date();
-    
-    let months = (today.getFullYear() - birth.getFullYear()) * 12;
-    months -= birth.getMonth();
-    months += today.getMonth();
-    
-    // Adjust if the current day is before the birth day
-    if (today.getDate() < birth.getDate()) {
-      months--;
-    }
-    
-    const years = Math.floor(months / 12);
-    // const remainingMonths = months % 12;
-    
-    return { months: months < 0 ? 0 : months, years };
-  };
+  const isDirty = form.nik !== '' || form.nama !== '' || form.tanggal_lahir !== '';
+  useUnsavedChanges(isDirty && !isSubmitting);
 
-  // Auto-calculate age when birth date changes
-  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const birthDate = e.target.value;
-    console.log('🎂 Birth date changed to:', birthDate);
-    console.log('🔄 Current state - isManualAge:', isManualAge, 'currentAge:', formData.currentAge);
-    
-    if (birthDate && !isManualAge) {
-      console.log('🤖 Auto-calculating age from birth date');
-      const { months, years } = calculateAgeFromBirthDate(birthDate);
-      console.log('📊 Calculated age - months:', months, 'years:', years);
-      
-      // Set age based on what makes more sense (under 2 years = months, over 2 years = years)
-      if (years < 2) {
-        console.log('👶 Setting age to', months, 'months');
-        setFormData(prev => ({ 
-          ...prev, 
-          birthDate,
-          currentAge: months.toString(), 
-          ageUnit: 'Bulan' 
-        }));
-      } else {
-        console.log('🧒 Setting age to', years, 'years');
-        setFormData(prev => ({ 
-          ...prev, 
-          birthDate,
-          currentAge: years.toString(), 
-          ageUnit: 'Tahun' 
-        }));
+  useEffect(() => {
+    const load = async () => {
+      if (!noKk) {
+        setLoadingParent(false);
+        return;
       }
-    } else {
-      console.log('� Manual mode or no birth date - just updating birth date');
-      // Just update birth date without changing age
-      setFormData(prev => ({ ...prev, birthDate }));
+      try {
+        const detail = await fetchKeluargaDetail(noKk);
+        setAyah(detail.ayah);
+        setIbu(detail.ibu);
+      } catch (err) {
+        console.error('Error loading keluarga:', err);
+      } finally {
+        setLoadingParent(false);
+      }
+    };
+    load();
+  }, [noKk]);
+
+  const handleSubmit = async () => {
+    setSubmitError(null);
+
+    if (!noKk) {
+      setSubmitError('Data orang tua tidak ditemukan.');
+      return;
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    // If user manually changes age, enable manual mode
-    if (name === 'currentAge') {
-      console.log('🖱️ User manually changing age to:', value);
-      setIsManualAge(true);
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // // Separate handler for age input to prevent conflicts
-  // const handleAgeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = e.target.value;
-  //   console.log('🔢 Age input changed to:', value, 'isManualAge:', isManualAge);
-    
-  //   // Only set manual mode if user actually types (not from auto-calculation)
-  //   if (!isManualAge) {
-  //     console.log('⚠️ Age changed but not setting manual mode (auto-calculation)');
-  //   } else {
-  //     console.log('✋ User manually changing age');
-  //   }
-    
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     currentAge: value
-  //   }));
-  // };
-
-  const handleGenderSelect = (gender: string) => {
-    setFormData(prev => ({
-      ...prev,
-      gender
-    }));
-  };
-
-  const [childImage, setChildImage] = useState<string>('');
-  const [childImageFile, setChildImageFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!no_kk) {
-      setSubmitError('Data orang tua tidak ditemukan');
+    if (!form.nik.trim() || !form.nama.trim() || !form.tanggal_lahir) {
+      setSubmitError('NIK, Nama, dan Tanggal Lahir wajib diisi.');
       return;
     }
 
+    const payload: NewAnakPayload = {
+      nik: form.nik.trim(),
+      no_kk: noKk,
+      nama: form.nama.trim(),
+      tempat_lahir: form.tempat_lahir.trim(),
+      tanggal_lahir: form.tanggal_lahir,
+      gender: form.gender,
+      bb_lahir: form.bb_lahir ? parseFloat(form.bb_lahir) : undefined,
+      tb_lahir: form.tb_lahir ? parseFloat(form.tb_lahir) : undefined,
+      lk_lahir: form.lk_lahir ? parseFloat(form.lk_lahir) : undefined,
+    };
+
     try {
       setIsSubmitting(true);
-      setSubmitError(null);
-
-      // Calculate age in years based on birth date and current age input
-      // Calculate age in years and months
-      const calculateAge = () => {
-        if (formData.birthDate) {
-          const { months, years } = calculateAgeFromBirthDate(formData.birthDate);
-          return { years, months: months % 12 };
-        }
-        // If no birth date, use manual age input
-        const currentAge = parseInt(formData.currentAge) || 0;
-        if (formData.ageUnit === 'Tahun') {
-          return { years: currentAge, months: 0 };
-        } else {
-          return { years: Math.floor(currentAge / 12), months: currentAge % 12 };
-        }
-      };
-
-      const ageData = calculateAge();
-
-      // Upload image if provided
-      let imageUrl = null;
-      if (childImageFile && formData.nik) {
-        try {
-          console.log('Uploading child image...');
-          imageUrl = await uploadChildImage(childImageFile, formData.nik);
-          console.log('Image uploaded successfully:', imageUrl);
-        } catch (imageError) {
-          console.error('Error uploading image:', imageError);
-          // Continue without image if upload fails
-        }
-      }
-
-      const childData: NewChildData = {
-        nik: formData.nik,
-        no_kk: no_kk,
-        nama: formData.name,
-        tanggal_lahir: formData.birthDate,
-        tempat_lahir: formData.birthPlace,
-        gender: formData.gender,
-        umur_tahun: ageData.years,
-        umur_bulan: ageData.months,
-        bb_lahir: parseFloat(formData.birthWeight) || 0,
-        tb_lahir: parseFloat(formData.birthHeight) || 0,
-        lk_lahir: parseFloat(formData.birthHeadCircumference) || 0,
-        image_anak: imageUrl,
-        aktif: true
-      };
-
-      console.log('Submitting child data:', childData);
-      
-      await insertChildData(childData);
-      
-      console.log('Child data saved successfully');
+      await insertAnak(payload, photoFile || undefined);
       router.push('/anak');
-      
-    } catch (error: unknown) {
-      console.error('Error saving child data:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Gagal menyimpan data anak');
+    } catch (err) {
+      console.error('Error saving anak:', err);
+      setSubmitError(err instanceof Error ? err.message : 'Gagal menyimpan data anak.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleBack = () => {
-    router.push('/anak/tambah');
-  };
-
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50">
-        {/* Main Content */}
-        <div className="max-w-3xl mx-auto px-4 py-8">
-          {/* Back Button */}
-          <div className="mb-6">
+      <div className="min-h-screen relative overflow-x-hidden bg-gray-50/50">
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-60 z-10"
+          style={{
+            background: `radial-gradient(ellipse at center top, rgba(158, 202, 214, 0.6) 0%, rgba(158, 202, 214, 0.3) 30%, rgba(158, 202, 214, 0.1) 50%, transparent 70%)`,
+          }}
+        />
+
+        <div className="relative z-20 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto">
             <button
-              onClick={handleBack}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+              onClick={() => guardedPush('/anak/tambah')}
+              className="mb-4 inline-flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-[#407A81] transition-colors"
             >
-              <FiArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Anak</span>
+              <FiArrowLeft size={18} />
+              <span>Kembali ke Pilih Orang Tua</span>
             </button>
-          </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Tambah Anak</h1>
 
-          {/* Content Card */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden p-8">
-            {/* Title */}
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">
-              Tambah Anak
-            </h1>
-            
-            {/* Parent Info */}
-            {fatherName && motherName && (
-              <div className="text-center mb-6 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">Orang Tua yang Dipilih:</p>
-                <p className="font-semibold text-gray-900">
-                  {decodeURIComponent(fatherName)} & {decodeURIComponent(motherName)}
-                </p>
-                <p className="text-sm text-gray-500">No. KK: {no_kk}</p>
-              </div>
-            )}
-
-            {/* Error Message */}
-            {submitError && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600 text-sm">{submitError}</p>
-              </div>
-            )}
-
-            {/* Profile Image */}
-            <div className="flex justify-center mb-8">
-              <div className="relative">
-                <div className="w-32 h-32 rounded-full overflow-hidden bg-[#E5F3F5] flex items-center justify-center text-[#397789]">
-                  {childImage ? (
-                    <img src={childImage} alt="foto anak" className="w-full h-full object-cover" />
-                  ) : (
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-4.418 0-8 3.582-8 8h16c0-4.418-3.582-8-8-8Z" fill="#397789"/>
-                    </svg>
-                  )}
+            {!loadingParent && (ayah || ibu) && (
+              <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
+                <div className="text-xs text-gray-500">Orang Tua Terpilih:</div>
+                <div className="text-sm font-semibold text-gray-800">
+                  {ayah?.nama || '—'} &amp; {ibu?.nama || '—'}
                 </div>
-                {/* Camera icon overlay */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 w-10 h-10 bg-[#407A81] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#326269] transition-colors"
-                >
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setChildImageFile(file);
-                      setChildImage(URL.createObjectURL(file));
-                    }
-                  }}
-                />
+                <div className="text-xs text-gray-400 ml-auto">No KK: {noKk}</div>
               </div>
-            </div>
+            )}
 
-            {/* Form */}
-            <form onSubmit={handleSubmit}>
-              {/* Identitas Anak Section */}
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Identitas Anak</h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Nama Anak */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nama Anak
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
-                      placeholder="Emma Jhon"
-                    />
-                  </div>
+            {submitError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{submitError}</div>
+            )}
 
-                  {/* NIK Anak */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      NIK Anak
-                    </label>
-                    <input
-                      type="text"
-                      name="nik"
-                      value={formData.nik}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
-                      placeholder="008211102131223"
-                    />
-                  </div>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-5 sm:px-7 py-6 border-b border-gray-100">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Identitas Anak</div>
 
-                  {/* Tempat Lahir */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tempat Lahir
-                    </label>
-                    <input
-                      type="text"
-                      name="birthPlace"
-                      value={formData.birthPlace}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
-                      placeholder="Tasikmalaya"
-                    />
-                  </div>
-
-                  {/* Tanggal Lahir */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tanggal Lahir
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        name="birthDate"
-                        value={formData.birthDate}
-                        onChange={handleBirthDateChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Usia Bayi saat ini */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Usia Bayi saat ini
-                      {formData.birthDate && !isManualAge && (
-                        <span className="text-xs text-green-600 ml-2">(Otomatis dari tanggal lahir)</span>
+                <div className="flex justify-center mb-6">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full overflow-hidden bg-[#E5F3F5] flex items-center justify-center text-[#397789]">
+                      {photoPreview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={photoPreview} alt="foto anak" className="w-full h-full object-cover" />
+                      ) : (
+                        <FiUser size={40} />
                       )}
-                      {isManualAge && (
-                        <span className="text-xs text-blue-600 ml-2">(Input manual)</span>
-                      )}
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        name="currentAge"
-                        value={formData.currentAge}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          console.log('🔢 Manual age input:', value);
-                          console.log('🔍 Before manual input - isManualAge:', isManualAge);
-                          
-                          // Only mark as manual if user actually types (not from programmatic update)
-                          if (e.nativeEvent && e.nativeEvent.isTrusted) {
-                            console.log('✋ User manually typing age');
-                            setIsManualAge(true);
-                          }
-                          
-                          setFormData(prev => ({
-                            ...prev,
-                            currentAge: value
-                          }));
-                        }}
-                        className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none text-center"
-                        placeholder="0"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (formData.birthDate && !isManualAge) {
-                            // Recalculate age in months from birth date
-                            const { months } = calculateAgeFromBirthDate(formData.birthDate);
-                            setFormData(prev => ({ ...prev, currentAge: months.toString(), ageUnit: 'Bulan' }));
-                          } else {
-                            // Just change unit without recalculating
-                            setFormData(prev => ({ ...prev, ageUnit: 'Bulan' }));
-                          }
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors cursor-pointer ${
-                          formData.ageUnit === 'Bulan'
-                            ? 'bg-[#407A81] text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                      >
-                        Bulan
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (formData.birthDate && !isManualAge) {
-                            // Recalculate age in years from birth date
-                            const { years } = calculateAgeFromBirthDate(formData.birthDate);
-                            setFormData(prev => ({ ...prev, currentAge: years.toString(), ageUnit: 'Tahun' }));
-                          } else {
-                            // Just change unit without recalculating
-                            setFormData(prev => ({ ...prev, ageUnit: 'Tahun' }));
-                          }
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors cursor-pointer ${
-                          formData.ageUnit === 'Tahun'
-                            ? 'bg-[#407A81] text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                      >
-                        Tahun
-                      </button>
                     </div>
-                    
-                    {/* Toggle button untuk mode manual/otomatis */}
-                    {formData.birthDate && (
-                      <div className="mt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newIsManualAge = !isManualAge;
-                            setIsManualAge(newIsManualAge);
-                            
-                            if (!newIsManualAge && formData.birthDate) {
-                              // Switch back to auto mode - recalculate age from birth date
-                              const { months, years } = calculateAgeFromBirthDate(formData.birthDate);
-                              if (formData.ageUnit === 'Bulan') {
-                                setFormData(prev => ({ ...prev, currentAge: months.toString() }));
-                              } else {
-                                setFormData(prev => ({ ...prev, currentAge: years.toString() }));
-                              }
-                            }
-                          }}
-                          className="text-xs text-[#407A81] hover:text-[#326269] underline"
-                        >
-                          {isManualAge ? 'Kembali ke perhitungan otomatis' : 'Input manual'}
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 w-8 h-8 bg-[#407A81] rounded-full flex items-center justify-center hover:bg-[#326269] transition-colors"
+                    >
+                      <FiPlus className="text-white" size={16} />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setPhotoFile(file);
+                          setPhotoPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
                   </div>
+                </div>
 
-                  {/* Jenis Kelamin */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Jenis Kelamin
-                    </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="NIK Anak" placeholder="3273xxxxxxxxxxxx" value={form.nik} onChange={(v) => setForm((p) => ({ ...p, nik: v }))} />
+                  <Field label="Nama Anak" placeholder="Nama lengkap" value={form.nama} onChange={(v) => setForm((p) => ({ ...p, nama: v }))} />
+                  <Field label="Tempat Lahir" placeholder="Tasikmalaya" value={form.tempat_lahir} onChange={(v) => setForm((p) => ({ ...p, tempat_lahir: v }))} />
+                  <Field label="Tanggal Lahir" type="date" value={form.tanggal_lahir} onChange={(v) => setForm((p) => ({ ...p, tanggal_lahir: v }))} />
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-gray-500 mb-1.5">Jenis Kelamin</label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
-                        onClick={() => handleGenderSelect('L')}
-                        className={`py-2 px-4 rounded-lg font-medium transition-colors cursor-pointer ${
-                          formData.gender === 'L'
-                            ? 'bg-[#407A81] text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        onClick={() => setForm((p) => ({ ...p, gender: 'L' }))}
+                        className={`py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                          form.gender === 'L' ? 'bg-[#407A81] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        Laki Laki
+                        Laki-laki
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleGenderSelect('P')}
-                        className={`py-2 px-4 rounded-lg font-medium transition-colors cursor-pointer ${
-                          formData.gender === 'P'
-                            ? 'bg-[#407A81] text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        onClick={() => setForm((p) => ({ ...p, gender: 'P' }))}
+                        className={`py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                          form.gender === 'P' ? 'bg-[#407A81] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         Perempuan
@@ -495,70 +222,32 @@ function TambahAnakFormContent() {
                 </div>
               </div>
 
-              {/* Data Timbangan saat Lahir Section */}
-              <div className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Data Timbangan saat Lahir</h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Berat Badan Lahir */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Berat Badan Lahir
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="birthWeight"
-                      value={formData.birthWeight}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
-                      placeholder="0.5 Kg"
-                    />
-                  </div>
-
-                  {/* Tinggi Badan Lahir */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tinggi Badan Lahir
-                    </label>
-                    <input
-                      type="number"
-                      name="birthHeight"
-                      value={formData.birthHeight}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
-                      placeholder="30 Cm"
-                    />
-                  </div>
-
-                  {/* Lingkar Kepala Lahir */}
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Lingkar Kepala Lahir
-                    </label>
-                    <input
-                      type="number"
-                      name="birthHeadCircumference"
-                      value={formData.birthHeadCircumference}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#407A81] focus:border-transparent outline-none"
-                      placeholder="15 Cm"
-                    />
-                  </div>
+              <div className="px-5 sm:px-7 py-6">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Data Saat Lahir (Opsional)</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label="Berat (kg)" type="number" placeholder="3.2" value={form.bb_lahir} onChange={(v) => setForm((p) => ({ ...p, bb_lahir: v }))} />
+                  <Field label="Tinggi (cm)" type="number" placeholder="49" value={form.tb_lahir} onChange={(v) => setForm((p) => ({ ...p, tb_lahir: v }))} />
+                  <Field label="Lingkar Kepala (cm)" type="number" placeholder="34" value={form.lk_lahir} onChange={(v) => setForm((p) => ({ ...p, lk_lahir: v }))} />
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <div className="flex justify-center">
+              <div className="px-5 sm:px-7 py-5 bg-gray-50/70 border-t border-gray-100 flex items-center justify-end gap-3">
                 <button
-                  type="submit"
+                  onClick={() => guardedPush('/anak/tambah')}
                   disabled={isSubmitting}
-                  className="w-full md:w-2/3 lg:w-1/2 bg-[#407A81] text-white py-4 px-8 rounded-xl hover:bg-[#326269] transition-colors font-semibold text-lg shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                  Batal
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 rounded-lg bg-[#407A81] text-white hover:bg-[#326269] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Anak'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
@@ -569,13 +258,15 @@ function TambahAnakFormContent() {
 export default function TambahAnakFormPage() {
   return (
     <ProtectedRoute>
-      <Suspense fallback={
-        <Layout>
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-gray-500">Loading...</div>
-          </div>
-        </Layout>
-      }>
+      <Suspense
+        fallback={
+          <Layout>
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-[#407A81]" />
+            </div>
+          </Layout>
+        }
+      >
         <TambahAnakFormContent />
       </Suspense>
     </ProtectedRoute>
