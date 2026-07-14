@@ -139,7 +139,7 @@ function ScanCaptureContent() {
           <p className="text-gray-500 text-sm">Data anak tidak ditemukan.</p>
           <button
             onClick={() => router.push('/scan')}
-            className="text-[#407A81] hover:underline text-sm"
+            className="text-[#407A81] cursor-pointer hover:underline text-sm"
           >
             Kembali ke daftar anak
           </button>
@@ -162,7 +162,7 @@ function ScanCaptureContent() {
           <div className="max-w-3xl mx-auto">
             <button
               onClick={() => router.push('/scan')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 text-sm"
+              className="flex cursor-pointer items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 text-sm"
             >
               <FiArrowLeft className="w-4 h-4" />
               Kembali
@@ -248,7 +248,7 @@ function ScanCaptureContent() {
                 <button
                   type="button"
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                  className="flex cursor-pointer items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
                 >
                   <FiChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
                   Pengaturan Teknis
@@ -270,7 +270,7 @@ function ScanCaptureContent() {
                         type="button"
                         onClick={handleCheckHealth}
                         disabled={isCheckingHealth || !endpointUrl.trim()}
-                        className="px-3 py-2 rounded-md border border-[#407A81] text-[#407A81] text-xs font-medium hover:bg-[#E7F5F7] disabled:opacity-50 whitespace-nowrap"
+                        className="px-3 cursor-pointer py-2 rounded-md border border-[#407A81] text-[#407A81] text-xs font-medium hover:bg-[#E7F5F7] disabled:opacity-50 whitespace-nowrap"
                       >
                         {isCheckingHealth ? 'Mengecek...' : 'Test Koneksi'}
                       </button>
@@ -329,14 +329,14 @@ function ScanCaptureContent() {
                 <button
                   onClick={handleScan}
                   disabled={!isFormValid || isScanning}
-                  className="w-full py-3 rounded-md bg-[#407A81] text-white font-semibold hover:bg-[#326269] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full cursor-pointer py-3 rounded-md bg-[#407A81] text-white font-semibold hover:bg-[#326269] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isScanning ? 'Memproses...' : 'Scan Sekarang'}
                 </button>
               ) : (
                 <button
                   onClick={handleContinue}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-md bg-[#407A81] text-white font-semibold hover:bg-[#326269] transition-colors"
+                  className="w-full cursor-pointer inline-flex items-center justify-center gap-2 py-3 rounded-md bg-[#407A81] text-white font-semibold hover:bg-[#326269] transition-colors"
                 >
                   Selanjutnya
                   <FiArrowRightCircle className="w-5 h-5" />

@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Layout, ProtectedRoute } from '@/components';
 import { useRouter } from 'next/navigation';
-import { FiFilter, FiSearch, FiClock, FiArrowRightCircle, FiUser } from 'react-icons/fi';
-import { fetchRiwayatScanHistory, fetchRiwayatScanSummary } from '@/utils/database';
+import { FiFilter, FiSearch, FiClock, FiArrowRightCircle, FiUser, FiTrash2, FiX } from 'react-icons/fi';
+import { fetchRiwayatScanHistory, fetchRiwayatScanSummary, deleteRiwayatScanBulk } from '@/utils/database';
 import { getStatusColor, getStatusLabel, NutritionStatus } from '@/lib/stuntingCalculator';
 import { RiwayatScanWithAnak } from '@/types';
 import { SummaryCards, SummaryCardData } from '@/components/sections/SummaryCards';
@@ -46,6 +46,12 @@ function HistoryPageContent() {
   const [error, setError] = useState<string | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
+  // --- Mode pilih & hapus massal ---
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
@@ -56,25 +62,26 @@ function HistoryPageContent() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [historyData, summaryData] = await Promise.all([
+        fetchRiwayatScanHistory(),
+        fetchRiwayatScanSummary(),
+      ]);
+      setRows(historyData);
+      setSummary(summaryData);
+    } catch (err) {
+      console.error('Error loading riwayat scan:', err);
+      setError('Gagal memuat data riwayat. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [historyData, summaryData] = await Promise.all([
-          fetchRiwayatScanHistory(),
-          fetchRiwayatScanSummary(),
-        ]);
-        setRows(historyData);
-        setSummary(summaryData);
-      } catch (err) {
-        console.error('Error loading riwayat scan:', err);
-        setError('Gagal memuat data riwayat. Silakan coba lagi.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadData();
   }, []);
 
   const toggleStatusFilter = (status: NutritionStatus) => {
@@ -107,6 +114,56 @@ function HistoryPageContent() {
     return list;
   }, [rows, query, statusFilter, sortOption]);
 
+  const allVisibleSelected = filtered.length > 0 && filtered.every((row) => selectedIds.has(row.id));
+  const someVisibleSelected = filtered.some((row) => selectedIds.has(row.id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        filtered.forEach((row) => next.delete(row.id));
+      } else {
+        filtered.forEach((row) => next.add(row.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleEnterSelectMode = () => {
+    setSelectMode(true);
+    setSelectedIds(new Set());
+  };
+
+  const handleCancelSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0 || deleting) return;
+    setDeleting(true);
+    try {
+      await deleteRiwayatScanBulk(Array.from(selectedIds));
+      setShowDeleteModal(false);
+      setSelectMode(false);
+      setSelectedIds(new Set());
+      await loadData();
+    } catch (err) {
+      console.error('Gagal menghapus riwayat:', err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="min-h-screen relative overflow-x-hidden bg-gray-50/50">
@@ -117,17 +174,18 @@ function HistoryPageContent() {
           }}
         />
 
-        <div className="relative z-10 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 pb-28">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Riwayat Pemindaian</h1>
-              <p className="text-sm sm:text-base text-gray-500 mt-2">
-                Seluruh hasil pemindaian yang sudah tersimpan.
-              </p>
+            <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
+              <div className="text-center flex-1">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Riwayat Pemindaian</h1>
+                <p className="text-sm sm:text-base text-gray-500 mt-2">
+                  Seluruh hasil pemindaian yang sudah tersimpan.
+                </p>
+              </div>
             </div>
 
             {/* Summary Cards */}
-           // SESUDAH
             <SummaryCards
               data={[
                 {
@@ -167,12 +225,12 @@ function HistoryPageContent() {
                 className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6"
                 style={{ boxShadow: '0px 1px 3px 1px #00000026, 0px 1px 2px 0px #0000004D' }}
               >
-                {/* Filter + Search */}
+                {/* Filter + Search + Toggle Hapus */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 sm:mb-6">
                   <div className="relative" ref={filterRef}>
                     <button
                       onClick={() => setShowFilters(!showFilters)}
-                      className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm sm:text-base w-full sm:w-fit"
+                      className="inline-flex cursor-pointer items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm sm:text-base w-full sm:w-fit"
                     >
                       <FiFilter className="text-gray-600" size={16} />
                       <span className="text-gray-700">Filter by</span>
@@ -232,19 +290,73 @@ function HistoryPageContent() {
                       className="w-full pl-9 sm:pl-10 pr-4 py-2 rounded-md border border-gray-200 focus:ring-2 focus:ring-[#9ECAD6] focus:border-transparent text-sm sm:text-base"
                     />
                   </div>
+
+                  {!selectMode ? (
+                    <button
+                      onClick={handleEnterSelectMode}
+                      disabled={rows.length === 0}
+                      className="inline-flex cursor-pointer items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-md border border-red-200 text-red-600 bg-white hover:bg-red-50 text-sm sm:text-base w-full sm:w-fit disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <FiTrash2 size={16} />
+                      <span>Hapus</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleCancelSelectMode}
+                      className="inline-flex cursor-pointer items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-md border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 text-sm sm:text-base w-full sm:w-fit"
+                    >
+                      <FiX size={16} />
+                      <span>Batal</span>
+                    </button>
+                  )}
                 </div>
+
+                {/* Select all (hanya muncul di mode pilih & ada data) */}
+                {selectMode && filtered.length > 0 && (
+                  <label className="flex items-center gap-2 cursor-pointer mb-3 px-1">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected;
+                      }}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: '#407A81' }}
+                    />
+                    <span className="text-sm text-gray-700 font-medium">
+                      {allVisibleSelected ? 'Batalkan semua' : 'Pilih semua'}
+                      {selectedIds.size > 0 && (
+                        <span className="text-gray-400 font-normal"> · {selectedIds.size} dipilih</span>
+                      )}
+                    </span>
+                  </label>
+                )}
 
                 {/* List */}
                 <div className="space-y-2 sm:space-y-3">
                   {filtered.map((row) => {
                     const colors = getStatusColor(row.status_gizi);
+                    const isChecked = selectedIds.has(row.id);
                     return (
                       <div
                         key={row.id}
-                        onClick={() => router.push(`/history/${row.id}`)}
-                        className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 border border-gray-100 rounded-lg hover:border-[#407A81] hover:shadow-md transition-all cursor-pointer"
+                        className={`p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 border rounded-lg transition-all ${selectMode && isChecked
+                            ? 'border-[#407A81] bg-[#F1F8F9]'
+                            : 'border-gray-100 hover:border-[#407A81] hover:shadow-md'
+                          }`}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {selectMode && (
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleSelectOne(row.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 rounded shrink-0"
+                              style={{ accentColor: '#407A81' }}
+                            />
+                          )}
                           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#E5F3F5] flex items-center justify-center text-[#397789] shrink-0">
                             <FiUser size={20} />
                           </div>
@@ -274,12 +386,15 @@ function HistoryPageContent() {
                           >
                             {getStatusLabel(row.status_gizi)}
                           </span>
-                          <button
-                            className="w-8 h-8 rounded-full border-2 border-[#397789] flex items-center justify-center text-[#397789] hover:bg-[#397789] hover:text-white transition-colors shrink-0"
-                            aria-label="Lihat detail"
-                          >
-                            <FiArrowRightCircle size={16} />
-                          </button>
+                          {!selectMode && (
+                            <button
+                              onClick={() => (selectMode ? toggleSelectOne(row.id) : router.push(`/history/${row.id}`))}
+                              className="w-8 h-8 cursor-pointer rounded-full border-2 border-[#397789] flex items-center justify-center text-[#397789] hover:bg-[#397789] hover:text-white transition-colors shrink-0"
+                              aria-label="Lihat detail"
+                            >
+                              <FiArrowRightCircle size={16} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -293,6 +408,73 @@ function HistoryPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Floating action bar - muncul saat mode pilih aktif & ada yang dipilih */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-md px-4">
+          <div
+            className="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 flex items-center justify-between gap-3"
+            style={{ boxShadow: '0px 4px 12px 0px #00000033' }}
+          >
+            <span className="text-sm font-medium text-gray-700">
+              {selectedIds.size} riwayat dipilih
+            </span>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="inline-flex cursor-pointer items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition-colors font-semibold text-sm"
+            >
+              <FiTrash2 size={16} />
+              Hapus
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal konfirmasi hapus massal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !deleting && setShowDeleteModal(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiTrash2 className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Hapus {selectedIds.size} Riwayat?
+              </h3>
+              <p className="text-gray-600 mb-6 text-sm">
+                Data riwayat pemindaian yang dipilih akan dihapus permanen dan tidak dapat dikembalikan.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="flex-1 cursor-pointer bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={deleting}
+                  className="flex-1 cursor-pointer bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    'Hapus'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

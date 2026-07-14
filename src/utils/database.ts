@@ -499,3 +499,10 @@ export async function updateUserPassword(
     .eq("id", userId);
   if (updateError) throw updateError;
 }
+
+/** Hapus banyak riwayat scan sekaligus (fitur pilih & hapus di halaman History). */
+export async function deleteRiwayatScanBulk(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await supabase.from("riwayat_scan").delete().in("id", ids);
+  if (error) throw error;
+}

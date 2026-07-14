@@ -97,7 +97,7 @@ function HasilScanContent() {
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
           <button
             onClick={() => router.push('/scan')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 text-sm"
+            className="flex cursor-pointer items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 text-sm"
           >
             <FiArrowLeft className="w-4 h-4" />
             Kembali ke daftar anak
@@ -204,14 +204,14 @@ function HasilScanContent() {
                 <button
                   onClick={handleBatal}
                   disabled={saving}
-                  className="w-full sm:w-auto min-w-60 border-2 border-gray-300 text-gray-600 py-3 px-10 rounded-xl hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
+                  className="w-full cursor-pointer sm:w-auto min-w-60 border-2 border-gray-300 text-gray-600 py-3 px-10 rounded-xl hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleSimpan}
                   disabled={saving}
-                  className="w-full sm:w-auto min-w-60 bg-[#407A81] text-white py-3 px-10 rounded-xl hover:bg-[#326269] transition-colors font-semibold shadow-lg disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                  className="w-full cursor-pointer sm:w-auto min-w-60 bg-[#407A81] text-white py-3 px-10 rounded-xl hover:bg-[#326269] transition-colors font-semibold shadow-lg disabled:opacity-50 inline-flex items-center justify-center gap-2"
                 >
                   {saving ? 'Menyimpan...' : 'Simpan Hasil'}
                 </button>
@@ -224,7 +224,7 @@ function HasilScanContent() {
                 </div>
                 <button
                   onClick={() => router.push('/history')}
-                  className="w-full sm:w-auto min-w-60 bg-[#407A81] text-white py-3 px-10 rounded-xl hover:bg-[#326269] transition-colors font-semibold shadow-lg"
+                  className="w-full cursor-pointer sm:w-auto min-w-60 bg-[#407A81] text-white py-3 px-10 rounded-xl hover:bg-[#326269] transition-colors font-semibold shadow-lg"
                 >
                   Lihat Riwayat
                 </button>

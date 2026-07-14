@@ -86,7 +86,7 @@ function HistoryDetailContent() {
       <Layout>
         <div className="min-h-screen flex flex-col items-center justify-center gap-4">
           <p className="text-gray-500 text-sm">Data riwayat tidak ditemukan.</p>
-          <button onClick={() => router.push('/history')} className="text-[#407A81] hover:underline text-sm">
+          <button onClick={() => router.push('/history')} className="text-[#407A81] cursor-pointer hover:underline text-sm">
             Kembali ke Riwayat
           </button>
         </div>
@@ -113,7 +113,7 @@ function HistoryDetailContent() {
         <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
           <button
             onClick={() => router.push('/history')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 text-sm"
+            className="flex cursor-pointer items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 text-sm"
           >
             <FiArrowLeft className="w-4 h-4" />
             Kembali ke Riwayat
@@ -207,7 +207,7 @@ function HistoryDetailContent() {
           <div className="flex justify-center mt-8">
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="w-full sm:w-auto min-w-60 inline-flex items-center justify-center gap-2 bg-white border-2 border-red-500 text-red-500 py-3 px-10 rounded-xl hover:bg-red-50 transition-colors font-semibold"
+              className="w-full cursor-pointer sm:w-auto min-w-60 inline-flex items-center justify-center gap-2 bg-white border-2 border-red-500 text-red-500 py-3 px-10 rounded-xl hover:bg-red-50 transition-colors font-semibold"
             >
               <FiTrash2 className="w-5 h-5" />
               Hapus Riwayat
@@ -233,14 +233,14 @@ function HistoryDetailContent() {
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deleting}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50"
+                  className="flex-1 cursor-pointer bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 cursor-pointer bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {deleting ? (
                     <>

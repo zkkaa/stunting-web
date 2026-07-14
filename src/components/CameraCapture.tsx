@@ -102,7 +102,7 @@ export default function CameraCapture({ onImageReady, onReset, capturedImage }: 
         </div>
         <button
           onClick={handleReset}
-          className="mt-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-[#407A81] text-[#407A81] hover:bg-[#E7F5F7] font-medium"
+          className="mt-3 w-full cursor-pointer sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-[#407A81] text-[#407A81] hover:bg-[#E7F5F7] font-medium"
         >
           <FiRefreshCw className="w-4 h-4" />
           Ambil Ulang
@@ -132,14 +132,14 @@ export default function CameraCapture({ onImageReady, onReset, capturedImage }: 
           <button
             onClick={handleCapture}
             disabled={isInitializing}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-[#407A81] text-white hover:bg-[#326269] disabled:opacity-50 font-medium"
+            className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-[#407A81] text-white hover:bg-[#326269] disabled:opacity-50 font-medium"
           >
             <FiCamera className="w-5 h-5" />
             Ambil Foto
           </button>
           <button
             onClick={handleReset}
-            className="px-4 py-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium"
+            className="px-4 cursor-pointer py-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium"
           >
             Batal
           </button>
@@ -154,7 +154,7 @@ export default function CameraCapture({ onImageReady, onReset, capturedImage }: 
     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
       <button
         onClick={startCamera}
-        className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-[#407A81] text-[#407A81] hover:bg-[#E7F5F7] transition-colors"
+        className="flex flex-col cursor-pointer items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-[#407A81] text-[#407A81] hover:bg-[#E7F5F7] transition-colors"
       >
         <FiCamera className="w-8 h-8" />
         <span className="font-medium">Gunakan Kamera</span>
@@ -162,7 +162,7 @@ export default function CameraCapture({ onImageReady, onReset, capturedImage }: 
 
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors"
+        className="flex flex-col cursor-pointer items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors"
       >
         <FiUpload className="w-8 h-8" />
         <span className="font-medium">Upload Foto</span>

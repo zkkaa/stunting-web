@@ -100,7 +100,7 @@ function ScanPageContent() {
                 <div className="relative" ref={filterRef}>
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm sm:text-base w-full sm:w-fit"
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm sm:text-base w-full sm:w-fit"
                   >
                     <FiFilter className="text-gray-600" size={16} />
                     <span className="text-gray-700">Filter by</span>
@@ -185,7 +185,7 @@ function ScanPageContent() {
                   {filtered.length === 0 && (
                     <div className="col-span-full text-center text-gray-500 py-10 text-sm">
                       Tidak ada data anak. <br />
-                      <button onClick={() => router.push('/anak/tambah')} className="text-[#407A81] hover:underline mt-2 inline-block">
+                      <button onClick={() => router.push('/anak/tambah')} className="text-[#407A81] cursor-pointer hover:underline mt-2 inline-block">
                         Tambah Anak terlebih dahulu
                       </button>
                     </div>
