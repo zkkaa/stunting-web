@@ -18,16 +18,19 @@ export const metadata: Metadata = {
   title: "Stunting Detection App",
   description: "Cegah stunting lebih awal dengan teknologi Computer Vision & IoT yang akurat dan terpercaya",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "StuntingApp",
-    startupImage: "/hero-main-placeholder.png"
   },
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
-    "msapplication-TileColor": "#407A81"
+    "msapplication-TileColor": "#407A81",
   }
 };
 
@@ -47,13 +50,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="scroll-smooth">
-      <head>
-        <link rel="icon" href="/vercel.svg" />
-        <link rel="apple-touch-icon" href="/hero-thumb-placeholder.png" />
-        <link rel="mask-icon" href="/vercel.svg" color="#407A81" />
-        <meta name="msapplication-TileImage" content="/hero-main-placeholder.png" />
-      </head>
+    <html lang="id" className="scroll-smooth" data-scroll-behavior="smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -67,14 +64,11 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
+              if ('serviceWorker' in navigator && ${process.env.NODE_ENV === 'production'}) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
                     .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
+                      console.error('SW registration failed: ', registrationError);
                     });
                 });
               }

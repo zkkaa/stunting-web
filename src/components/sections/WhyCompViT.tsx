@@ -13,7 +13,7 @@ interface WhyCardProps {
 
 const WhyCard: React.FC<WhyCardProps> = ({ title, description }) => {
   return (
-    <motion.div 
+    <motion.div
       className="bg-white p-3 sm:p-4 lg:p-6 text-center h-32 sm:h-36 lg:h-40 flex flex-col justify-center shadow-[0px_1px_3px_1px_#00000026,0px_1px_2px_0px_#0000004D] opacity-100 rounded-tl-[50px] sm:rounded-tl-[100px] rounded-tr-[50px] sm:rounded-tr-[100px] rounded-br-[5px] sm:rounded-br-[10px] rounded-bl-[5px] sm:rounded-bl-[10px]"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -21,7 +21,7 @@ const WhyCard: React.FC<WhyCardProps> = ({ title, description }) => {
       viewport={{ once: true }}
       whileHover={{ scale: 1.05, y: -5 }}
     >
-      <motion.h3 
+      <motion.h3
         className="text-sm sm:text-base font-bold text-gray-800 mb-1 sm:mb-2 leading-tight text-center"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -30,7 +30,7 @@ const WhyCard: React.FC<WhyCardProps> = ({ title, description }) => {
       >
         {title}
       </motion.h3>
-      <motion.p 
+      <motion.p
         className="text-sm text-gray-600 leading-relaxed text-center"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -71,7 +71,7 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
   ];
 
   return (
-    <motion.section 
+    <motion.section
       className={`wave-background-bottom min-h-screen py-8 sm:py-12 lg:py-20 px-6 lg:px-12 relative ${className}`}
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
@@ -84,17 +84,17 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
           <path d="M0 60c60 0 60 60 120 60s60-60 120-60 60 60 120 60 60-60 120-60 60 60 120 60 60-60 120-60 60 60 120 60 60-60 120-60 60 60 120 60 60-60 120-60 60 60 120 60 60-60 120-60v60H0Z" />
         </svg>
       </div>
-      
+
       <div className="max-w-7xl mx-auto relative z-10 pt-16 sm:pt-24 lg:pt-32">
         {/* Header */}
-        <motion.div 
+        <motion.div
           className="text-center mb-8 sm:mb-10 lg:mb-12"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <motion.h2 
+          <motion.h2
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 sm:mb-8 leading-tight text-center"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -106,7 +106,7 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
         </motion.div>
 
         {/* Why Features Grid */}
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8 lg:mb-12"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -130,7 +130,7 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
         </motion.div>
 
         {/* CTA Section */}
-        <motion.div 
+        <motion.div
           className="flex flex-col items-center space-y-4 sm:space-y-6 lg:space-y-8"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -138,7 +138,7 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
           viewport={{ once: true }}
         >
           {/* Image Card */}
-          <motion.div 
+          <motion.div
             className="w-full max-w-xs sm:max-w-sm"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -147,23 +147,24 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
             whileHover={{ scale: 1.05 }}
           >
             <div className="relative overflow-hidden h-48 sm:h-56 lg:h-64 opacity-100 rounded-tl-[50px] sm:rounded-tl-[100px] rounded-tr-[50px] sm:rounded-tr-[100px] rounded-br-[10px] sm:rounded-br-[20px] rounded-bl-[10px] sm:rounded-bl-[20px]">
-              <Image 
+              <Image
                 src="/image/icon/pengukuran-anak.jpg"
-                alt="Pengukuran Anak" 
+                alt="Pengukuran Anak"
                 fill
+                sizes="(max-width: 640px) 320px, 384px"
               />
             </div>
           </motion.div>
-          
+
           {/* Heading */}
-          <motion.div 
+          <motion.div
             className="text-center"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
             viewport={{ once: true }}
           >
-            <motion.h3 
+            <motion.h3
               className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 leading-tight text-center"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -172,7 +173,7 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
             >
               Mulai Deteksi Dini, Wujudkan
             </motion.h3>
-            <motion.h4 
+            <motion.h4
               className="text-lg sm:text-xl lg:text-2xl font-bold text-white text-center"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -182,7 +183,7 @@ const WhyCompViT: React.FC<WhyCompViTProps> = ({ className = '', buttonLink = "/
               Generasi Bebas Stunting
             </motion.h4>
           </motion.div>
-          
+
           {/* Button */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}

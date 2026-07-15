@@ -17,56 +17,25 @@
       "short_name": "Scan",
       "description": "Lakukan pemindaian deteksi stunting",
       "url": "/scan",
-      "icons": [{ "src": "/hero-thumb-placeholder.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
     },
     {
       "name": "Konsultasi",
       "short_name": "Chat",
       "description": "Konsultasi dengan chatbot AI",
       "url": "/konsultasi",
-      "icons": [{ "src": "/hero-thumb-placeholder.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
     },
     {
       "name": "Data Anak",
       "short_name": "Anak",
       "description": "Kelola data anak",
       "url": "/anak",
-      "icons": [{ "src": "/hero-thumb-placeholder.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
     }
   ],
   "icons": [
-    {
-      "src": "/hero-thumb-placeholder.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/hero-main-placeholder.png", 
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/vercel.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/hero-main-placeholder.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/hero-thumb-placeholder.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
   ],
   "prefer_related_applications": false,
   "iarc_rating_id": "",
