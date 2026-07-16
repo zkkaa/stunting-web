@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Layout, ProtectedRoute } from '@/components';
+import { Layout } from '@/components';
 import { BiSend, BiLoader } from 'react-icons/bi';
 import { BsRobot } from 'react-icons/bs';
 import Conversation from '@/components/ui/konsultasi/Conversation';
@@ -75,18 +75,30 @@ function KonsultasiPageContent() {
         }}
       />
 
-      <div className="relative z-10 flex-1 flex justify-center items-center max-w-4xl w-full mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-32">
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="w-14 h-14 rounded-full bg-[#407A81] flex items-center justify-center text-white mx-auto mb-3">
-            <BsRobot size={26} />
+      <div className="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-32">
+        {chats.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center mb-6 sm:mb-8 min-h-[50vh]">
+            <div className="w-14 h-14 rounded-full bg-[#407A81] flex items-center justify-center text-white mx-auto mb-3">
+              <BsRobot size={26} />
+            </div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+              Konsultasi Pencegahan Stunting
+            </h1>
+            <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">
+              Tanyakan seputar tumbuh kembang dan pencegahan stunting pada anak.
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-            Konsultasi Pencegahan Stunting
-          </h1>
-          <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">
-            Tanyakan seputar tumbuh kembang dan pencegahan stunting pada anak. 
-          </p>
-        </div>
+        ) : (
+          <Conversation chats={chats} />
+        )}
+
+        {isLoading && (
+          <div className="flex items-center gap-2 px-4 text-sm text-gray-500">
+            <BiLoader className="size-4 animate-spin" />
+            Sedang mengetik...
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
@@ -127,10 +139,8 @@ function KonsultasiPageContent() {
 
 export default function KonsultasiPage() {
   return (
-    <ProtectedRoute>
-      <Layout>
-        <KonsultasiPageContent />
-      </Layout>
-    </ProtectedRoute>
+    <Layout>
+      <KonsultasiPageContent />
+    </Layout>
   );
 }

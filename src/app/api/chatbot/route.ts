@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   if (!message || typeof message !== "string" || !message.trim()) {
     return NextResponse.json(
       { success: false, error: "Pesan tidak boleh kosong." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     });
 
     const chat = ai.chats.create({
-      model: "gemini-2.5-flash",
+      model: "gemini-flash-latest",
       history: geminiHistory,
       config: {
         systemInstruction:
@@ -40,12 +40,18 @@ export async function POST(request: NextRequest) {
 
     const response = await chat.sendMessage({ message });
 
-    return NextResponse.json({ success: true, data: response.text }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: response.text },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Gemini API error:", error);
     return NextResponse.json(
-      { success: false, error: "Model AI saat ini tidak tersedia. Silakan coba lagi nanti." },
-      { status: 500 }
+      {
+        success: false,
+        error: "Model AI saat ini tidak tersedia. Silakan coba lagi nanti.",
+      },
+      { status: 500 },
     );
   }
 }
